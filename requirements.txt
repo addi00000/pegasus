@@ -4,3 +4,4 @@ cryptography
 discord
 pyautogui
 pypiwin32
+colorama
