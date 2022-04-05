@@ -1,7 +1,6 @@
 import base64
 import json
 import os
-import threading
 import winreg
 from base64 import b64decode
 from json import load, loads
