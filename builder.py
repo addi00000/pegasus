@@ -1,11 +1,9 @@
 import os
 import shutil
-import time
 import requests
 
 import requests
 from colorama import Fore, Style
-
 
 def main():
     print(Fore.BLUE + """
@@ -63,5 +61,3 @@ __________
     
 if __name__ == '__main__':
     main()
-    
-# 
