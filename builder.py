@@ -51,8 +51,12 @@ __________
         
         os.system(f"python -m PyInstaller --onefile --noconsole --distpath ./ .\{filename}.py")
         
+        shutil.rmtree(r".\build")
+        shutil.rmtree(r".\__pycache__")
+        os.remove(f".\{filename}.spec")
+                
         input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
-        exit()
+
         
     else:
         exit()
