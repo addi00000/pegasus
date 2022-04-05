@@ -49,7 +49,7 @@ __________
         
         os.system(r"pip install --upgrade -r .\requirements.txt")
         
-        os.system(f"python -m PyInstaller --onefile --noconsole --distpath ./ .\{filename}.py")
+        os.system(f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ .\{filename}.py")
         
         shutil.rmtree(r".\build")
         shutil.rmtree(r".\__pycache__")

