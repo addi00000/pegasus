@@ -5,4 +5,3 @@ discord
 pyautogui
 pypiwin32
 colorama
-pyarmor
