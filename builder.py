@@ -1,6 +1,5 @@
 import os
 import shutil
-import requests
 
 import requests
 from colorama import Fore, Style

