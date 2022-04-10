@@ -1,6 +1,5 @@
 requests
 pycryptodome
-cryptography
 discord
 pyautogui
 pypiwin32
