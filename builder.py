@@ -61,11 +61,10 @@ __________
         os.remove(f".\{filename}.spec")
                 
         input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
-
         
     else:
         exit()
     
 if __name__ == '__main__':
-    init(convert=True)
+    init()
     main()
