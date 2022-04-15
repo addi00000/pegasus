@@ -102,11 +102,11 @@ class Obfuscate:
         return imports
     
     def obfuscate(self, code, level):
-        obfuscated = f"\nexec(base64.b64decode({base64.b64encode(code.encode('utf-8',errors = 'strict'))}))"
+        obfuscated = f"\nexec(base64.a85decode({base64.a85encode(code.encode('utf-8',errors = 'strict'))}))"
     
         with alive_bar(level) as bar:
             for e in range(level):
-                obfuscated = f"import base64\nexec(base64.b64decode({base64.b64encode(obfuscated.encode('utf-8',errors = 'strict'))}))"
+                obfuscated = f"import base64\nexec(base64.a85decode({base64.a85encode(obfuscated.encode('utf-8',errors = 'strict'))}))"
                 bar() 
             
         return obfuscated
