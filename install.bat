@@ -9,4 +9,4 @@ pip install --upgrade -r requirements.txt
 echo Running builder...
 python builder.py
 
-pause >nul
+exit

