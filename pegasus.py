@@ -69,8 +69,7 @@ def pegasus():
     errors = []
 
     for func in {main(WEBHOOK_URL), 
-    cleanup(),
-    startup()}:
+    cleanup(),}:
         try:
             func()
         except:
