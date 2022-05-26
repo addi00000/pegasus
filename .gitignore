@@ -1,2 +1,6 @@
 test.py
 inject.js
+# I use virtualfish for my virtualenvs, so I
+# don't want this file to be in the repo
+#                        - Kiwifuit
+.venv
