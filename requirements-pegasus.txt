@@ -1,0 +1,6 @@
+cryptography
+Crypto
+discord
+pyautogui
+requests
+psutil
