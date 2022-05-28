@@ -1,10 +1,7 @@
-requests
-pycryptodome
-discord
-pyautogui
-pypiwin32
-colorama
-cryptography
 psutil
-alive_progress
-winshell
+requests
+wmi
+cryptography
+discord
+pillow
+pypiwin32

