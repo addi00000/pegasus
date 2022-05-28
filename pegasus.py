@@ -22,6 +22,7 @@ import psutil
 import requests
 import wmi
 from Crypto.Cipher import AES
+from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from PIL import ImageGrab
 from win32api import SetFileAttributes
