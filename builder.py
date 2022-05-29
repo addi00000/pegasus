@@ -65,9 +65,9 @@ __________
         
         os.system(f"python -m PyInstaller --onefile --noconsole -i NONE --distpath ./ .\{filename}-obfuscated.py")
         
-        shutil.rmtree(r".\build")
-        shutil.rmtree(r".\__pycache__")
-        os.remove(f".\{filename}-obfuscated.spec")
+        if os.path.isdir(r".\build"): shutil.rmtree(r".\build")
+        if os.path.isdir(r".\__pycache__"): shutil.rmtree(r".\__pycache__")
+        if os.path.isfile(f".\{filename}-obfuscated.spec"): os.remove(f".\{filename}-obfuscated.spec")
                 
         input(Fore.GREEN + "Done!\nPress enter to exit..." + Style.RESET_ALL)
         
