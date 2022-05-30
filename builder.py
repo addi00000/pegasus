@@ -99,6 +99,9 @@ class Obfuscate:
                 if line.startswith("import") or line.startswith("from"):
                     imports.append(line)
         
+        imports.append("from cryptography.fernet import Fernet")
+        imports.append("import base64")
+        
         return imports
     
     def obfuscate(self, code, level):

